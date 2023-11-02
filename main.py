@@ -23,12 +23,12 @@ def read_root():
 @app.get("/news")
 def read_news():
     try:
-        print('########## 뉴스 스크래핑을 시작합니다. ##########')
+        print('\n- [Mini MLOps] 뉴스 스크래핑을 시작합니다.\n')
         scraper = NewsScraper()
         scraper.scrape_news()
         scraper.save_data_to_csv()
         scraper.cleanup()
-        print('########## 뉴스 스크래핑을 마칩니다. ##########')
+        print('- [Mini MLOps] 뉴스 스크래핑을 마칩니다.\n')
         return {"status": "success", "message": "[Mini MLOps] 뉴스 스크래핑을 완료했습니다."}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

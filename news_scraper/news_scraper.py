@@ -86,16 +86,16 @@ class NewsScraper:
         file_name = f"news_{current_date}.csv"
         df = pd.DataFrame(self.data)
         df.to_csv(file_name, encoding='utf-8', index=False)
-        print(f'########## {file_name}에 저장했습니다. ##########')
+        print(f'\n- [Mini MLOps] {file_name}에 저장했습니다.')
 
     def cleanup(self):
         self.driver.quit()
 
 # API 호출 시 실행 안 됨
 if __name__ == "__main__":
-    print('########## 뉴스 스크래핑을 시작합니다. ##########')
+    print('\n- [Mini MLOps] 뉴스 스크래핑을 시작합니다.\n')
     scraper = NewsScraper()
     scraper.scrape_news()
     scraper.save_data_to_csv()
     scraper.cleanup()
-    print('########## 뉴스 스크래핑을 마칩니다. ##########')
+    print('- [Mini MLOps] 뉴스 스크래핑을 마칩니다.\n')
