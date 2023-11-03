@@ -11,8 +11,8 @@ import pandas as pd
 from news_scraper.news_category import NewsCategory
 from news_scraper.format_time import getFormattedCurrentDateTime, getFormattedCurrentDate
 
-MAX_PAGE = 2        # 11
-NEWS_LAST_INDEX = 4 # 16
+MAX_PAGE = 11
+NEWS_LAST_INDEX = 16
 
 class NewsScraper:
     def __init__(self):
