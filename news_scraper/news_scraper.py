@@ -52,7 +52,7 @@ class NewsScraper:
                 self.driver.get(page_url)
 
                 for index in range(1, NEWS_LAST_INDEX):
-                    print(f'########## "{category.value}"뉴스 {page}페이지, {index}번째 기사 ##########')
+                    print(f'\n########## "{category.value}"뉴스 {page}페이지, {index}번째 기사 ##########')
                     print('\t 1) 뉴스 기사 URL 클릭하기', end='\t')
                     if not self.click_news_link(f'/html/body/div[2]/div/div/div[1]/div[3]/ul/li[{index}]/div/strong/a'):
                         continue
@@ -93,7 +93,7 @@ class NewsScraper:
 
 # API 호출 시 실행 안 됨
 if __name__ == "__main__":
-    print('\n- [Mini MLOps] 뉴스 스크래핑을 시작합니다.\n')
+    print('\n- [Mini MLOps] 뉴스 스크래핑을 시작합니다.')
     scraper = NewsScraper()
     scraper.scrape_news()
     scraper.save_data_to_csv()

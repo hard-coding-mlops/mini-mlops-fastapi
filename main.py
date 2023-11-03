@@ -23,7 +23,7 @@ def read_root():
 @app.get("/news")
 def read_news():
     try:
-        print('\n- [Mini MLOps] 뉴스 스크래핑을 시작합니다.\n')
+        print('\n- [Mini MLOps] 뉴스 스크래핑을 시작합니다.')
         scraper = NewsScraper()
         scraper.scrape_news()
         scraper.save_data_to_csv()
