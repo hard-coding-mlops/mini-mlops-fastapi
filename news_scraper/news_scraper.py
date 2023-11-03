@@ -65,7 +65,7 @@ class NewsScraper:
             writer = csv.DictWriter(file, fieldnames=["scraping_time", "article_category", "article_upload_time", "article_title", "article_text"])
             writer.writeheader()
 
-            with Pool(processes=4) as pool:  # You can adjust the number of processes as needed
+            with Pool(processes=len(NewsCategory)) as pool:  # Create as many processes as there are categories
                 for category in NewsCategory:
                     partial_scrape_daum_news = partial(self.scrape_daum_news, category)
                     results = pool.map(partial_scrape_daum_news, range(1, MAX_PAGE))
