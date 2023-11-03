@@ -2,6 +2,8 @@ from datetime import datetime
 import csv
 import requests
 from bs4 import BeautifulSoup
+from multiprocessing import Pool
+from functools import partial
 
 from news_scraper.news_category import NewsCategory
 from news_scraper.format_time import get_formatted_current_date_time, get_formatted_current_date, format_date
@@ -12,26 +14,28 @@ class NewsScraper:
     def __init__(self):
         self.results = []
 
-    def scrape_daum_news(self, category):
-        for page in range(1, MAX_PAGE):
-            page_url = f"https://news.daum.net/breakingnews/{category.value}?page={page}"
-            response = requests.get(page_url)
+    def scrape_daum_news(self, category, page):
+        page_url = f"https://news.daum.net/breakingnews/{category.value}?page={page}"
+        response = requests.get(page_url)
 
-            if response.status_code != 200:
-                print(f"{page_url}를 불러오는 데 문제가 발생했습니다")
-                continue
+        if response.status_code != 200:
+            print(f"{page_url}를 불러오는 데 문제가 발생했습니다")
+            return []
 
-            print(f"\n- {category.value} {page}페이지 가져옴")
+        print(f"\n- {category.value} {page}페이지 가져옴")
 
-            soup = BeautifulSoup(response.text, "html.parser")
-            ul = soup.find("ul", class_="list_news2 list_allnews")
+        soup = BeautifulSoup(response.text, "html.parser")
+        ul = soup.find("ul", class_="list_news2 list_allnews")
+        article_info_list = []
 
-            for index, li in enumerate(ul.find_all("li")):
-                a = li.find("a", class_="link_txt")
-                result = requests.get(a["href"])
-                print(f"\t- {index + 1}. {a['href']} 가져오는 중...")
-                article_info = self.scrape_article(result, category)
-                self.results.append(article_info)
+        for index, li in enumerate(ul.find_all("li")):
+            a = li.find("a", class_="link_txt")
+            result = requests.get(a["href"])
+            print(f"\t- {index + 1}. {a['href']} 가져오는 중...")
+            article_info = self.scrape_article(result, category)
+            article_info_list.append(article_info)
+
+        return article_info_list
 
     def scrape_article(self, response, category):
         soup = BeautifulSoup(response.text, "html.parser")
@@ -61,9 +65,12 @@ class NewsScraper:
             writer = csv.DictWriter(file, fieldnames=["scraping_time", "article_category", "article_upload_time", "article_title", "article_text"])
             writer.writeheader()
 
-            for category in NewsCategory:
-                self.scrape_daum_news(category)
-                writer.writerows(self.results)
+            with Pool(processes=4) as pool:  # You can adjust the number of processes as needed
+                for category in NewsCategory:
+                    partial_scrape_daum_news = partial(self.scrape_daum_news, category)
+                    results = pool.map(partial_scrape_daum_news, range(1, MAX_PAGE))
+                    for result_list in results:
+                        writer.writerows(result_list)
 
         print("\n- [Mini MLOps] 뉴스 스크래핑을 마칩니다.\n")
 
