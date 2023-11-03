@@ -1,8 +1,13 @@
 from datetime import datetime, timedelta
 import pytz
 
-def getFormattedCurrentDateTime():
-    return datetime.now(pytz.timezone('Asia/Seoul')).strftime("%Y년 %m월 %d일 %H시 %M분 %S초")
+def get_formatted_current_date_time():
+    return datetime.now(pytz.timezone('Asia/Seoul')).strftime("%Y.%m.%d. %H:%M:%S")
 
-def getFormattedCurrentDate():
-    return datetime.now(pytz.timezone('Asia/Seoul')).strftime("%Y%m%d")
+def get_formatted_current_date():
+    return datetime.now(pytz.timezone('Asia/Seoul')).strftime("%y%m%d")
+
+def format_date(date_time):
+    parsed_date = datetime.strptime(date_time, "%Y. %m. %d. %H:%M")
+    formatted_date = parsed_date.strftime("%Y.%m.%d. %H:%M")
+    return formatted_date

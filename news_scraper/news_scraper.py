@@ -1,101 +1,72 @@
-from selenium import webdriver
-import chromedriver_autoinstaller
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.common.exceptions import NoSuchElementException, TimeoutException
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.chrome.options import Options
+from datetime import datetime
 import csv
-import pandas as pd
+import requests
+from bs4 import BeautifulSoup
 
 from news_scraper.news_category import NewsCategory
-from news_scraper.format_time import getFormattedCurrentDateTime, getFormattedCurrentDate
+from news_scraper.format_time import get_formatted_current_date_time, get_formatted_current_date, format_date
 
 MAX_PAGE = 11
-NEWS_LAST_INDEX = 16
 
 class NewsScraper:
     def __init__(self):
-        self.driver = self.setup_driver()
-        self.data = []
+        self.results = []
 
-    def setup_driver(self):
-        chrome_options = Options()
-        chrome_options.add_argument("--headless")
-        chrome_options.add_argument("--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36")
-        driver = webdriver.Chrome(options=chrome_options)
-        return driver
+    def scrape_daum_news(self, category):
+        for page in range(1, MAX_PAGE):
+            page_url = f"https://news.daum.net/breakingnews/{category.value}?page={page}"
+            response = requests.get(page_url)
 
-    def click_news_link(self, xpath):
-        try:
-            link_to_news = WebDriverWait(self.driver, 10).until(EC.element_to_be_clickable((By.XPATH, xpath)))
-            self.driver.execute_script('arguments[0].click();', link_to_news)
-            print('>>> 성공')
-            return True
-        except (TimeoutException, NoSuchElementException):
-            print('>>> 실패')
-            return False
+            if response.status_code != 200:
+                print(f"{page_url}를 불러오는 데 문제가 발생했습니다")
+                continue
 
-    def get_element_text(self, xpath):
-        try:
-            element = WebDriverWait(self.driver, 3).until(EC.presence_of_element_located((By.XPATH, xpath)))
-            print('>>> 성공')
-            return element.text
-        except TimeoutException:
-            print('>>> 실패')
-            return None
+            print(f"\n- {category.value} {page}페이지 가져옴")
 
-    def scrape_news(self):
-        for category in NewsCategory:
-            for page in range(1, MAX_PAGE):
-                page_url = f'https://news.daum.net/breakingnews/{category.value}?page={page}'
-                self.driver.get(page_url)
+            soup = BeautifulSoup(response.text, "html.parser")
+            ul = soup.find("ul", class_="list_news2 list_allnews")
 
-                for index in range(1, NEWS_LAST_INDEX):
-                    print(f'\n########## "{category.value}"뉴스 {page}페이지, {index}번째 기사 ##########')
-                    print('\t 1) 뉴스 기사 URL 클릭하기', end='\t')
-                    if not self.click_news_link(f'/html/body/div[2]/div/div/div[1]/div[3]/ul/li[{index}]/div/strong/a'):
-                        continue
+            for index, li in enumerate(ul.find_all("li")):
+                a = li.find("a", class_="link_txt")
+                result = requests.get(a["href"])
+                print(f"\t- {index + 1}. {a['href']} 가져오는 중...")
+                article_info = self.scrape_article(result, category)
+                self.results.append(article_info)
 
-                    scrape_start_time = getFormattedCurrentDateTime()
+    def scrape_article(self, response, category):
+        soup = BeautifulSoup(response.text, "html.parser")
+        current_time = get_formatted_current_date_time()
 
-                    print('\t 2) 뉴스 기사 제목 가져오기', end='\t')
-                    title = self.get_element_text('/html/body/div[1]/main/section/div/article/div[1]/h3')
+        upload_time = soup.find("span", class_="num_date").text
+        title = soup.find("h3", class_="tit_view").text
+        content = soup.find("div", class_="article_view").text.strip()
 
-                    if title is not None:
-                        print('\t 3) a) 뉴스 기사 내용 가져오기', end='\t')
-                        # 첫 번째 XPath
-                        content_xpath = '/html/body/div[1]/main/section/div/article/div[2]/div[2]/section'
-                        content = self.get_element_text(content_xpath)
-                        if content is None:
-                            # 첫 번째 XPath 실패 -> 두 번째 XPath
-                            print('\t    b) XPATH 변경하여 재시도', end='\t')
-                            content_xpath = '/html/body/div[1]/main/section/div/article/div[2]/div/section'
-                            retry_content = self.get_element_text(content_xpath)
-                            if retry_content is None:
-                                print('>>> 실패')
-                                # print(f'##########[크롤링 실패] "{category.value}"뉴스 {page}페이지, {index}번째 기사 크롤링에 실패했습니다.##########\n##########다음 기사로 넘어갑니다.##########\n')
-                                self.driver.back()
-                                continue
-                        self.data.append({'scrape_time': scrape_start_time, 'category': category.value, 'title': title, 'content': content})
+        print(f"\t    날짜: {upload_time}\n\t    제목: {title}\n\t    내용: {content[:30].strip()} ...")
 
-                    self.driver.back()
+        return {
+            "scraping_time": current_time,
+            "article_category": category.value,
+            "article_upload_time": format_date(upload_time),
+            "article_title": title,
+            "article_text": content
+        }
 
-    def save_data_to_csv(self):
-        current_date = getFormattedCurrentDate()
-        file_name = f"news_{current_date}.csv"
-        df = pd.DataFrame(self.data)
-        df.to_csv(file_name, encoding='utf-8', index=False)
-        print(f'\n- [Mini MLOps] {file_name}에 저장했습니다.')
+    def run(self):
+        print("뉴스 스크래핑을 시작합니다.")
 
-    def cleanup(self):
-        self.driver.quit()
+        current_date = get_formatted_current_date()
+        file_name = f"news_data/news_{current_date}.csv"
 
-# API 호출 시 실행 안 됨
+        with open(file_name, encoding="UTF-8", mode="w", newline="") as file:
+            writer = csv.DictWriter(file, fieldnames=["scraping_time", "article_category", "article_upload_time", "article_title", "article_text"])
+            writer.writeheader()
+
+            for category in NewsCategory:
+                self.scrape_daum_news(category)
+                writer.writerows(self.results)
+
+        print("\n- [Mini MLOps] 뉴스 스크래핑을 마칩니다.\n")
+
 if __name__ == "__main__":
-    print('\n- [Mini MLOps] 뉴스 스크래핑을 시작합니다.')
-    scraper = NewsScraper()
-    scraper.scrape_news()
-    scraper.save_data_to_csv()
-    scraper.cleanup()
-    print('- [Mini MLOps] 뉴스 스크래핑을 마칩니다.\n')
+    news_scraper = NewsScraper()
+    news_scraper.run()
