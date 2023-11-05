@@ -14,28 +14,51 @@ class NewsScraper:
     def __init__(self):
         self.results = []
 
-    def scrape_daum_news(self, category, page):
-        page_url = f"https://news.daum.net/breakingnews/{category.value}?page={page}"
-        response = requests.get(page_url)
+    # def scrape_news(self, category, page):
+    #     page_url = f"https://news.daum.net/breakingnews/{category.value}?page={page}"
+    #     response = requests.get(page_url)
 
-        if response.status_code != 200:
-            print(f"{page_url}를 불러오는 데 문제가 발생했습니다")
-            return []
+    #     if response.status_code != 200:
+    #         print(f"{page_url}를 불러오는 데 문제가 발생했습니다")
+    #         return []
 
-        print(f"\n- {category.value} {page}페이지 가져옴")
+    #     print(f"\n- {category.value} {page}페이지 가져옴")
 
-        soup = BeautifulSoup(response.text, "html.parser")
-        ul = soup.find("ul", class_="list_news2 list_allnews")
-        article_info_list = []
+    #     soup = BeautifulSoup(response.text, "html.parser")
+    #     ul = soup.find("ul", class_="list_news2 list_allnews")
+    #     article_info_list = []
 
-        for index, li in enumerate(ul.find_all("li")):
-            a = li.find("a", class_="link_txt")
-            result = requests.get(a["href"])
-            print(f"\t- {index + 1}. {a['href']} 가져오는 중...")
-            article_info = self.scrape_article(result, category)
-            article_info_list.append(article_info)
+    #     for index, li in enumerate(ul.find_all("li")):
+    #         a = li.find("a", class_="link_txt")
+    #         result = requests.get(a["href"])
+    #         print(f"\t- {index + 1}. {a['href']} 가져오는 중...")
+    #         article_info = self.scrape_article(result, category)
+    #         article_info_list.append(article_info)
 
-        return article_info_list
+    #     return article_info_list
+
+    def scrap_news(category):
+        for page in range(1, MAX_PAGE):
+            page_url = f"https://news.daum.net/breakingnews/{category}?page={page}"
+            response = requests.get(page_url)
+
+            if response.status_code != 200:
+                print(f"{page_url}를 불러오는 데 문제가 발생했습니다")
+                return []
+
+            print(f"\n- {category} {page}페이지 가져옴")
+            soup = BeautifulSoup(response.text, "html.parser")
+            ul = soup.find("ul", class_="list_news2 list_allnews")
+            article_info_list = []
+
+            for index, li in enumerate(ul.find_all("li")):
+                a = li.find("a", class_="link_txt")
+                result = requests.get(a["href"])
+                print(f"\t- {index + 1}. {a['href']} 가져오는 중...")
+                article_info = self.scrape_article(result, category)
+                article_info_list.append(article_info)
+
+            return article_info_list
 
     def scrape_article(self, response, category):
         soup = BeautifulSoup(response.text, "html.parser")
@@ -61,16 +84,17 @@ class NewsScraper:
         current_date = get_formatted_current_date()
         file_name = f"news_data/news_{current_date}.csv"
 
+        news_categories = list(NewsCategory)
+
         with open(file_name, encoding="UTF-8", mode="w", newline="") as file:
             writer = csv.DictWriter(file, fieldnames=["scraping_time", "article_category", "article_upload_time", "article_title", "article_text"])
             writer.writeheader()
 
-            with Pool(processes=len(NewsCategory)) as pool:  # Create as many processes as there are categories
-                for category in NewsCategory:
-                    partial_scrape_daum_news = partial(self.scrape_daum_news, category)
-                    results = pool.map(partial_scrape_daum_news, range(1, MAX_PAGE))
-                    for result_list in results:
-                        writer.writerows(result_list)
+            with Pool(processes=len(news_categories)) as pool:
+                results = pool.map(scrape_news, categories)
+
+                for result_list in results:
+                    writer.writerows(result_list)
 
         print("\n- [Mini MLOps] 뉴스 스크래핑을 마칩니다.\n")
 
