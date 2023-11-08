@@ -25,12 +25,13 @@ def read_root():
 def read_news():
     try:
         print('\n- [Mini MLOps]', end = ' ')
-        news_scraper = NewsScraper()
-        news_scraper.run()
+        newscraper = NewsScraper()
+        newscraper.run()
+        
         return {"status": "success", "message": "[Mini MLOps] 뉴스 스크래핑을 완료했습니다."}
     except Exception as e:
         traceback.print_exc()
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) 
 
 @app.get("/save-to-db")
 def save_news_in_db():
