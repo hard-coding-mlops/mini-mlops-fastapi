@@ -6,7 +6,7 @@ from bs4 import BeautifulSoup
 from multiprocessing import Pool
 from functools import partial
 
-
+from news_article import *
 from news_scraper.news_category import NewsCategory
 from news_scraper.format_time import *
 from database import *
@@ -59,7 +59,7 @@ class NewsScraper:
         return articles
 
     def scrape_article_from_url(self, url, category):
-        time.sleep(0.5)
+        #time.sleep(0.5)
         response = requests.get(url)
 
         if response.status_code != 200:
@@ -73,22 +73,33 @@ class NewsScraper:
         title = news_html.find("h3", class_="tit_view").text
         content = news_html.find("div", class_="article_view").text.strip()
 
-        CRUD.insert('raw_news_data',current_time, category, format_date(upload_time), title, content)
+        return {
+            "scraping_time": current_time,
+            "category": category,
+            "upload_time": format_date(upload_time),
+            "title": title,
+            "content": content
+        }
         
     def run(self): 
         news_categories = [category.value for category in NewsCategory]
-
-        # 데이터 존재 유무 확인
-        if is_exist_table("raw_news_data") == 0:
-            create_raw_news_data() 
+        
+        # 데이터 존재 유무 확인 
+        #if EngineConn.is_exist_table("raw_news_data") == 0:
+        #    EngineConn.create_raw_news_data() 
         print("뉴스 스크래핑을 시작합니다.")
         #current_date = get_formatted_current_date()
 
         with Pool(processes=len(NewsCategory)) as pool:
-            pool.map(self.scrape_url_per_category, news_categories)     
-            print(f"\n- [Mini MLOps] 'DB'에 저장되었습니다.")
-
-        print("\n- [Mini MLOps] 뉴스 스크래핑을 마칩니다.\n")
+            article_list = pool.map(self.scrape_url_per_category, news_categories)     
+            
+            return article_list
+        
+            # session = EngineConn.session_maker()
+            # session.add(article)
+            # session.flush()
+            # session.close()
+            #print(f"\n- [Mini MLOps] 'DB'에 저장되었습니다.")
 
 if __name__ == "__main__":
     newscraper = NewsScraper()
