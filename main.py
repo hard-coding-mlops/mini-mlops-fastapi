@@ -4,17 +4,14 @@
 # pip install -r requirements.txt
 # uvicorn main:app --reload
 
-from typing import Union
 from fastapi import FastAPI, HTTPException
 import traceback
-import os
-from dotenv import load_dotenv
 import numpy as np
 
 from news_scraper.news_scraper import NewsScraper
 from database import *
 from news_article import *
-from sqlalchemy import MetaData
+from sqlalchemy.orm import declarative_base
 
 app = FastAPI()
 
@@ -32,30 +29,23 @@ def read_news():
     try:
         print('\n- [Mini MLOps]', end = ' ')
         
-        if is_exist_table(connection, "raw_news_data") == 0:
-            meta = MetaData() 
-            create_raw_news_data(meta)
-            meta.create_all(engine)
-
+        if is_exist_table(connection, "raw_news_data") == 0:    
+            Base.metadata.create_all(engine)
+            
         newscraper = NewsScraper()
         results = newscraper.run()
 
-        #session = engine.session_maker()
-        # for articles in results:
-        #     for article in articles:
-        #         session.add(article)
-        #article_list = np.array(results).flatten()
-
-        # connection.execute(insert("raw_news_data"),article_list)
-        # connection.commit()
-        db = Table("raw_news_data", MetaData(), autoload=True, autoload_with=engine)
-        query = db.insert("raw_news_data")
+        session_maker = sessionmaker(bind=engine)
+        session = session_maker()
+        
         for articles in results:
             for article in articles:
-                #print(article.shape)
-                print(article)
-                result_proxy = connection.execute(query, article)
-        result_proxy.close()
+                session.add(article)
+                session.commit()
+                session.delete(article)
+                session.commit()
+
+        session.close()
 		
 		
         #CRUD.insert(engine, "raw_news_data", connection, article_list)

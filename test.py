@@ -47,6 +47,8 @@ for k,v in Base.metadata.tables.items():
       
 print(Base.metadata.tables)
 
+Base.metadata.create_all(engine)
+
 article=Article(current_time = "2023-01-01",
 				category = "history",
 				upload_time = "2023-01-01",
@@ -54,5 +56,7 @@ article=Article(current_time = "2023-01-01",
         content = "content")
 
 session.add(article)
-session.flush()
+session.commit()
+session.delete(article)
+session.commit()
 session.close()
