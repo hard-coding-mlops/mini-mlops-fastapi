@@ -42,13 +42,7 @@ def read_news():
             for article in articles:
                 session.add(article)
                 session.commit()
-                session.delete(article)
-                session.commit()
-
         session.close()
-		
-		
-        #CRUD.insert(engine, "raw_news_data", connection, article_list)
 
         return {"status": "success", "message": "[Mini MLOps] 뉴스 스크래핑을 완료했습니다."}
     except Exception as e:

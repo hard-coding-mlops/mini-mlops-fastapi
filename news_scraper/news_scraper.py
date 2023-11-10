@@ -66,15 +66,18 @@ class NewsScraper:
             print(f"{url}를 불러오는 데 문제가 발생했습니다")
             print(f"\t- {category.upper()} PROCESS POOL을 종료합니다.\n")
             return
-        
+         
         news_html = BeautifulSoup(response.text, "html.parser")
         current_time = get_formatted_current_date_time()
         upload_time = news_html.find("span", class_="num_date").text
         title = news_html.find("h3", class_="tit_view").text
         content = news_html.find("div", class_="article_view").text.strip()
-
+        # print("변경 전 : ",upload_time)
+        # print("변경 후 : ",format_date(upload_time))
+        # print(type(format_date(upload_time)))
+        # print("current_time : ", current_time)
+        # print(type(current_time))
         return Article(
-            current_time = current_time,
             category = category,
             upload_time = upload_time,
             title = title,
