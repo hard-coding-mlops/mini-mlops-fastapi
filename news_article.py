@@ -5,16 +5,15 @@ from datetime import datetime
 
 # #DB모델이나 클래스를 만들기 위해 선언한 클래스 (추후 상속하여 사용)
 # # 상속클래스들을 자동으로 인지하고 알아서 매핑해줌.
-
 Base = declarative_base()
 
 class Article(Base):
-	__tablename__ = 'raw_news_data'
+	__tablename__ = 'news_article'
 
 	id = Column(SMALLINT, autoincrement=True, primary_key=True)
 	scraping_time = Column(DateTime ,default= datetime.utcnow)
 	article_category = Column(Text, nullable=False)
-	article_uploadtime = Column(DateTime)
+	article_uploadtime = Column(Text)
 	article_title = Column(Text, nullable=False)
 	article_content = Column(Text, nullable=False)
 

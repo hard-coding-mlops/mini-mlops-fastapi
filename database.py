@@ -1,14 +1,12 @@
 import os
 from dotenv import load_dotenv
-from sqlalchemy import create_engine,MetaData,Table, Column, Integer, String, DateTime, insert
-from sqlalchemy.orm import sessionmaker, declarative_base
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 load_dotenv(os.path.join(BASE_DIR, ".env"))
 
-localhost = os.getenv("LOCALHOST") 
-username = os.getenv("USERNAME") 
-password = os.getenv("PASSWORD") 
+localhost = os.getenv("DATABASE_URL") 
+username = os.getenv("DATABASE_USERNAME") 
+password = os.getenv("DATABASE_PASSWORD") 
 port = os.getenv("PORT")
 database_name = os.getenv("DATABASE_NAME")
 
@@ -26,3 +24,12 @@ def is_exist_table(connection, table_name):
 			print(f"{table_name} 테이블이 존재하지 않습니다.")
 			return 0
 
+#column : 중복 여부를 수행할 행
+def delete_duplicates(connection, table_name, column):
+	sql_query = f"delete a from '{table_name}' a, '{table_name}' b where a.id > b.id and a.'{column}' = b.'{column}'"
+	connection.execute(sql_query)
+
+def remove_empty(connection, table_name, column):
+	sql_query = f"delete from '{table_name}' where '{column}' =''"
+	connection.execute(sql_query)
+	
