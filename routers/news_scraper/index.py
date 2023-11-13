@@ -17,7 +17,7 @@ async def first_scrape_news_articles(db: db_dependency):
     try:
         print('\n- [Mini MLOps]', end = ' ')
         news_scraper = NewsScraper()
-        results = news_scraper.first_runrun()
+        results = news_scraper.first_run()
         
         for articles in results:
             for article in articles:
