@@ -113,7 +113,7 @@ class NewsScraper:
         with Pool(processes=len(news_categories)) as pool:
             results = pool.map(self.scrape_url_per_category, news_categories)
 
-        print("\n- [Mini MLOps] 첫 뉴스 스크래핑을 마칩니다.\n")
+        print("\n- [Mini MLOps] 첫 뉴스 스크래핑을 마치고 데이터베이스에 저장합니다.\n")
         
     def run(self):
         print("뉴스 스크래핑을 시작합니다.")
@@ -122,7 +122,7 @@ class NewsScraper:
         with Pool(processes=len(news_categories)) as pool:
             results = pool.map(self.scrape_less_per_category, news_categories)
 
-        print("\n- [Mini MLOps] 뉴스 스크래핑을 마칩니다.\n")
+        print("\n- [Mini MLOps] 뉴스 스크래핑을 마치고 데이터베이스에 저장합니다.\n")
         
         return results
 
