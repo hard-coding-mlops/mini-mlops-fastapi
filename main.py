@@ -1,10 +1,10 @@
 from fastapi import FastAPI, HTTPException, Depends, status
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
 from typing import Annotated
 from sqlalchemy.orm import Session
 
-from routers.news_scraper import index as news
+from routers.news_scraper import index as scraper
+from routers.news_classifier import index as classifier
 from models import news_article
 from database.conn import engine, SessionLocal
 
@@ -29,6 +29,7 @@ app.add_middleware(
 def say_hello():
     return {"message": "[Mini MLOps] Hello world from FastAPI."}
 
-app.include_router(news.router, prefix="/news")
+app.include_router(scraper.router, prefix="/scraper")
+app.include_router(classifier.router, prefix="/classifier")
 
 print(f'Documents: http://localhost:8000/docs')
