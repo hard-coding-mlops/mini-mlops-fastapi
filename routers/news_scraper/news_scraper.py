@@ -10,6 +10,7 @@ from .format_time import get_formatted_current_date_time, get_formatted_current_
 
 MAX_PAGE = 11
 
+# TODO: 시간 단위로 수집했던 기사는 다시 접근하지 않기 (dict() {"society" : "23-11-05 18:32"})
 class NewsScraper:
     def __init__(self):
         self.results = []

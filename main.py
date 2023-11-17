@@ -4,14 +4,14 @@ from typing import Annotated
 from sqlalchemy.orm import Session
 
 from routers.news_scraper import index as scraper
-# from routers.preprocessor import index as preprocessor
+from routers.preprocessor import index as preprocessor
 from routers.news_classifier import index as classifier
 from models import news_article, preprocessed_article, scraped_order
 from database.conn import engine, SessionLocal
 
 app = FastAPI()
 news_article.Base.metadata.create_all(bind = engine)
-# preprocessed_article.Base.metadata.create_all(bind = engine)
+preprocessed_article.Base.metadata.create_all(bind = engine)
 scraped_order.Base.metadata.create_all(bind = engine)
 
 
@@ -33,8 +33,17 @@ app.add_middleware(
 def say_hello():
     return {"message": "[Mini MLOps] Hello world from FastAPI."}
 
+# 수집
 app.include_router(scraper.router, prefix="/scraper")
-# app.include_router(preprocessor.router, prefix="/preprocessor")
+
+# 전처리(정제)
+app.include_router(preprocessor.router, prefix="/preprocessor")
+
+# 학습
+
+# 배포
+
+# 서비스
 app.include_router(classifier.router, prefix="/classifier")
 
 print(f'Documents: http://localhost:8000/docs')

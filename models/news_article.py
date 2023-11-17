@@ -11,5 +11,5 @@ class NewsArticle(Base):
     content = Column(Text)
     upload_datetime = Column(DateTime)
     
-    # preprocessed_articles = relationship("PreprocessedArticle", back_populates = "news_articles")
+    preprocessed_articles = relationship("PreprocessedArticle", back_populates = "news_articles")
     scraped_orders = relationship("ScrapedOrder", back_populates = "news_articles")
