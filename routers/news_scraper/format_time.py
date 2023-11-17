@@ -5,7 +5,7 @@ def get_formatted_current_date_time():
     return datetime.now(pytz.timezone('Asia/Seoul')).strftime("%Y.%m.%d. %H:%M:%S")
 
 def get_formatted_current_date():
-    return datetime.now(pytz.timezone('Asia/Seoul')).strftime("%y%m%d")
+    return datetime.now(pytz.timezone('Asia/Seoul')).strftime("%Y-%m-%d")
 
 def format_date(date_time):
     parsed_date = datetime.strptime(date_time, "%Y. %m. %d. %H:%M")
