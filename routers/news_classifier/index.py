@@ -13,7 +13,7 @@ class Article(BaseModel):
 @router.post("/classify", status_code = status.HTTP_200_OK)
 async def classify_article(article: Article, db: db_dependency):
     try:
-        print('\n- [Mini MLOps] 다음은 입력된 기사입니다.')
+        print('\n\033[36m[Mini MLOps] \033[32m다음은 입력된 기사입니다.')
         print('req: ', article.content)
         return {"category": 'society', "message": "[Mini MLOps] 뉴스 기사를 분류했습니다."}
     except Exception as e:

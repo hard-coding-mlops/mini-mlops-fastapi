@@ -32,11 +32,11 @@ async def read_all_news_articles(db: db_dependency):
 @router.get("/first-scrape", status_code=status.HTTP_200_OK)
 async def first_scrape_news_articles(db: db_dependency):
     try:
-        print('\n- [Mini MLOps]', end=' ')
+        print("\n\033[36m[Mini MLOps] \033[37m", end=' ')
 
         news_scraper = NewsScraper()
         results = news_scraper.first_run()
-        print("\n- [Mini MLOps] 뉴스 스크래핑을 마치고 데이터베이스에 저장합니다.\n이 작업은 꽤 걸립니다.")
+        print("\n\033[36m[Mini MLOps] \033[32m뉴스 스크래핑을 마치고 데이터베이스에 저장합니다.\n이 작업은 꽤 걸립니다.")
 
         current_order_no = 1
 
@@ -52,11 +52,12 @@ async def first_scrape_news_articles(db: db_dependency):
 @router.get("/scrape", status_code=status.HTTP_200_OK)
 async def scrape_news_articles(db: db_dependency):
     try:
-        print('\n- [Mini MLOps]', end=' ')
+        print("\n\033[36m[Mini MLOps] \033[37m", end=' ')
 
         news_scraper = NewsScraper()
         results = news_scraper.run()
-        print("\n- [Mini MLOps] 뉴스 스크래핑을 마치고 데이터베이스에 저장합니다.\n- [Mini MLOps] 이 작업은 꽤 걸립니다.")
+        print("\n\033[36m[Mini MLOps] \033[32m뉴스 스크래핑을 마치고 데이터베이스에 저장합니다.")
+        print("\033[36m[Mini MLOps] \033[33m이 작업은 꽤 걸립니다.\n")
 
         last_scraped_order = db.query(ScrapedOrder).order_by(ScrapedOrder.id.desc()).first()
         current_order_no = last_scraped_order.scraped_order_no + 1 if last_scraped_order else 1
@@ -65,7 +66,7 @@ async def scrape_news_articles(db: db_dependency):
             for article in articles:
                 save_news_article_and_scraped_order(db, article, current_order_no)
 
-        return {"status": "success", "message": "[Mini MLOps] 뉴스 스크래핑을 완료했습니다."}
+        return {"status": "success", "message": "[Mini MLOps] 뉴스 스크래핑을 완료했습니다.\n"}
     except Exception as e:
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
