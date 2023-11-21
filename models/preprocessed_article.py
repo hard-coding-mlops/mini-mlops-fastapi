@@ -8,7 +8,6 @@ class PreprocessedArticle(Base):
     id = Column(Integer, primary_key = True, index = True)
     news_article_id = Column(Integer, ForeignKey("news_articles.id"))
     category_no = Column(Integer)
-    content = Column(Text)
-    bert_tokenized = Column
+    embedded_inputs = Column(Text)
     
     news_articles = relationship("NewsArticle", back_populates = "preprocessed_articles")

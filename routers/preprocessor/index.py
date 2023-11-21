@@ -1,41 +1,45 @@
 from fastapi import APIRouter, HTTPException, status
 import traceback
 import pandas as pd
+import re
+from kobert_tokenizer import KoBERTTokenizer
 
 from models.news_article import NewsArticle
 from models.scraped_order import ScrapedOrder
 from models.preprocessed_article import PreprocessedArticle
 from database.conn import db_dependency
+from .category_label import category_label
 
 router = APIRouter()
+tokenizer = KoBERTTokenizer.from_pretrained('skt/kobert-base-v1')
 
 # id, category 외래키
 # category_NO, text, token_to_ids 테이블 생성
-@router.get("/get", status_code = status.HTTP_200_OK)
-async def read_all_news_articles(db: db_dependency):
-    last_scraped_order = db.query(ScrapedOrder).order_by(ScrapedOrder.id.desc()).limit(1).first()
-    last_scraped_news_articles = (
-            db.query(NewsArticle)
-            .join(ScrapedOrder)
-            .filter(ScrapedOrder.scraped_order_no == last_scraped_order.scraped_order_no)
-            .all()
-        )
+# @router.get("/get", status_code = status.HTTP_200_OK)
+# async def read_all_news_articles(db: db_dependency):
+#     last_scraped_order = db.query(ScrapedOrder).order_by(ScrapedOrder.id.desc()).limit(1).first()
+#     last_scraped_news_articles = (
+#             db.query(NewsArticle)
+#             .join(ScrapedOrder)
+#             .filter(ScrapedOrder.scraped_order_no == last_scraped_order.scraped_order_no)
+#             .all()
+#         )
     
-    news_article_df = pd.DataFrame([
-        {
-            "category": article.category,
-            "title": article.title,
-            "content": article.content,
-        }
-        for article in last_scraped_news_articles
-    ])
+#     news_article_df = pd.DataFrame([
+#         {
+#             "category": article.category,
+#             "title": article.title,
+#             "content": article.content,
+#         }
+#         for article in last_scraped_news_articles
+#     ])
     
-    return {
-        "status": "success",
-        "message": "[Mini MLOps] 뉴스 기사를 불러왔습니다.",
-        "length": len(last_scraped_news_articles),
-        "data": last_scraped_news_articles,
-    }
+#     return {
+#         "status": "success",
+#         "message": "[Mini MLOps] 뉴스 기사를 불러왔습니다.",
+#         "length": len(last_scraped_news_articles),
+#         "data": last_scraped_news_articles,
+#     }
 
 @router.get("/save-wanted-articles", status_code = status.HTTP_200_OK)
 async def read_all_news_articles(db: db_dependency):
@@ -50,16 +54,38 @@ async def read_all_news_articles(db: db_dependency):
     non_duplicated_contents = set()
     non_duplicated_articles = []
     
+    # 중복 제거
     for article in last_scraped_news_articles:
         if article.content not in non_duplicated_contents:
             non_duplicated_contents.add(article.content)
             non_duplicated_articles.append(article)
-       
-    # 중복 제거된 뉴스 기사 배열 non_duplicated_articles 
     
+    # 한글 이외 단어들 제거
+    # preprocessed_articles = []
+    # embedded_text_list = []
+    for article in non_duplicated_articles:
+        preprocessed_article = PreprocessedArticle()
+        article.title = re.sub('[^가-힣 ]', '', article.title).strip()
+        article.content = re.sub('[^가-힣 ]', '', article.content).strip()
+        length_of_content = len(article.content)
+        
+        if length_of_content > 10:
+            preprocessed_article.news_article_id = article.id
+            text = article.title + article.content
+            preprocessed_article.category_no = category_label[article.category]
+            tokenized_text = tokenizer.tokenize(text)
+            preprocessed_article.embedded_inputs = tokenizer.decode(tokenizer.encode(tokenized_text))
+            
+            db.add(preprocessed_article)
+            db.commit()
+            db.refresh(preprocessed_article)
+            print(f"\n\033[36m[Mini MLOps] \033[32m정제된 데이터 #{preprocessed_article.id}를 데이터베이스에 저장합니다.")
+            # print(f'\n\n\n\n\n{text}\n#####\n{article.embedded_inputs}')
+            # print(article.__dict__.keys())
+        
     return {
         "status": "success",
-        "message": "[Mini MLOps] 뉴스 기사를 불러왔습니다.",
-        "length": len(non_duplicated_articles),
-        "data": last_scraped_news_articles,
+        "message": "[Mini MLOps] 데이터 정제가 완료되었습니다.",
+        # "length": len(non_duplicated_articles),
+        # "data": last_scraped_news_articles,
     }
