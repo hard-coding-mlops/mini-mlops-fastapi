@@ -11,7 +11,7 @@ from database.conn import db_dependency
 from .category_label import category_label
 
 router = APIRouter()
-tokenizer = KoBERTTokenizer.from_pretrained('skt/kobert-base-v1')
+tokenizer = KoBERTTokenizer.from_pretrained('skt/kobert-base-v1', sp_model_kwargs={'nbest_size': -1, 'alpha': 0.6, 'enable_sampling': True})
 
 @router.get("/preprocess", status_code = status.HTTP_200_OK)
 async def read_all_news_articles(db: db_dependency):
