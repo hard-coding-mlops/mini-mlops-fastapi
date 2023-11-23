@@ -5,7 +5,6 @@ import re
 from kobert_tokenizer import KoBERTTokenizer
 
 from models.news_article import NewsArticle
-from models.scraped_order import ScrapedOrder
 from models.preprocessed_article import PreprocessedArticle
 from database.conn import db_dependency
 from .category_label import category_label
@@ -15,13 +14,20 @@ tokenizer = KoBERTTokenizer.from_pretrained('skt/kobert-base-v1', sp_model_kwarg
 
 @router.get("/preprocess", status_code = status.HTTP_200_OK)
 async def read_all_news_articles(db: db_dependency):
-    last_scraped_order = db.query(ScrapedOrder).order_by(ScrapedOrder.id.desc()).limit(1).first()
+    
+    last_scraped_order = (
+        db.query(NewsArticle.scraped_order_no)
+        .order_by(NewsArticle.scraped_order_no.desc())
+        .limit(1)
+        .first()
+    )[0]
     last_scraped_news_articles = (
             db.query(NewsArticle)
-            .join(ScrapedOrder)
-            .filter(ScrapedOrder.scraped_order_no == last_scraped_order.scraped_order_no)
+            .filter(NewsArticle.scraped_order_no == last_scraped_order)
             .all()
         )
+    
+    print(f"\n\033[36m[Mini MLOps] \033[32m데이터 정제를 시작합니다.")
     
     non_duplicated_contents = set()
     non_duplicated_articles = []
@@ -51,7 +57,8 @@ async def read_all_news_articles(db: db_dependency):
             db.add(preprocessed_article)
             db.commit()
             db.refresh(preprocessed_article)
-            print(f"\n\033[36m[Mini MLOps] \033[32m정제된 데이터 #{preprocessed_article.id}를 데이터베이스에 저장합니다.")
+    
+    print(f"\n\033[36m[Mini MLOps] \033[32m데이터 정제가 완료되었습니다.")
         
     return {
         "status": "success",

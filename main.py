@@ -6,13 +6,14 @@ from sqlalchemy.orm import Session
 from routers.news_scraper import index as scraper
 from routers.preprocessor import index as preprocessor
 from routers.news_classifier import index as classifier
-from models import news_article, preprocessed_article, scraped_order
+from routers.data_management import index as data_management
+
+from models import news_article, preprocessed_article
 from database.conn import engine, SessionLocal
 
 app = FastAPI()
 news_article.Base.metadata.create_all(bind = engine)
 preprocessed_article.Base.metadata.create_all(bind = engine)
-scraped_order.Base.metadata.create_all(bind = engine)
 
 
 # 미들웨어
@@ -32,6 +33,9 @@ app.add_middleware(
 @app.get("/")
 def say_hello():
     return {"message": "[Mini MLOps] Hello world from FastAPI."}
+
+# WEB API
+app.include_router(data_management.router, prefix="/data_management")
 
 # 수집
 app.include_router(scraper.router, prefix="/scraper")

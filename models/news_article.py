@@ -10,6 +10,6 @@ class NewsArticle(Base):
     title = Column(String(100))
     content = Column(Text)
     upload_datetime = Column(DateTime)
+    scraped_order_no = Column(Integer)
     
     preprocessed_articles = relationship("PreprocessedArticle", back_populates = "news_articles")
-    scraped_orders = relationship("ScrapedOrder", back_populates = "news_articles")
