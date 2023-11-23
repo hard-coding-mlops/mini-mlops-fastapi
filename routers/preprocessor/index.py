@@ -22,10 +22,10 @@ async def read_all_news_articles(db: db_dependency):
         .first()
     )[0]
     last_scraped_news_articles = (
-            db.query(NewsArticle)
-            .filter(NewsArticle.scraped_order_no == last_scraped_order)
-            .all()
-        )
+        db.query(NewsArticle)
+        .filter(NewsArticle.scraped_order_no == last_scraped_order)
+        .all()
+    )
     
     print(f"\n\033[36m[Mini MLOps] \033[32m데이터 정제를 시작합니다.")
     
