@@ -12,4 +12,5 @@ class NewsArticle(Base):
     upload_datetime = Column(DateTime)
     scraped_order_no = Column(Integer)
     
-    preprocessed_articles = relationship("PreprocessedArticle", back_populates = "news_articles")
+    
+    preprocess_relationships = relationship("PreprocessRelationship", back_populates = "news_articles")

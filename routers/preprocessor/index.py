@@ -6,6 +6,7 @@ from kobert_tokenizer import KoBERTTokenizer
 
 from models.news_article import NewsArticle
 from models.preprocessed_article import PreprocessedArticle
+from models.preprocess_relationship import PreprocessRelationship
 from database.conn import db_dependency
 from .category_label import category_label
 
@@ -13,7 +14,7 @@ router = APIRouter()
 tokenizer = KoBERTTokenizer.from_pretrained('skt/kobert-base-v1', sp_model_kwargs={'nbest_size': -1, 'alpha': 0.6, 'enable_sampling': True})
 
 @router.get("/preprocess", status_code = status.HTTP_200_OK)
-async def read_all_news_articles(db: db_dependency):
+async def preprocess_articles(db: db_dependency):
     
     last_scraped_order = (
         db.query(NewsArticle.scraped_order_no)
@@ -42,13 +43,13 @@ async def read_all_news_articles(db: db_dependency):
     preprocessed_articles_length = 0
     for article in non_duplicated_articles:
         preprocessed_article = PreprocessedArticle()
+        preprocess_relationship = PreprocessRelationship()
         article.title = re.sub('[^가-힣 ]', '', article.title).strip()
         article.content = re.sub('[^가-힣 ]', '', article.content).strip()
         length_of_content = len(article.content)
         
         if length_of_content > 10:
             preprocessed_articles_length += 1
-            preprocessed_article.news_article_id = article.id
             text = article.title + article.content
             preprocessed_article.category_no = category_label[article.category]
             tokenized_text = tokenizer.tokenize(text)
@@ -57,6 +58,13 @@ async def read_all_news_articles(db: db_dependency):
             db.add(preprocessed_article)
             db.commit()
             db.refresh(preprocessed_article)
+            
+            preprocess_relationship.news_article_id = article.id
+            preprocess_relationship.preprocessed_article_id = preprocessed_article.id
+            print(preprocess_relationship.news_article_id, preprocess_relationship.preprocessed_article_id)
+            db.add(preprocess_relationship)
+            db.commit()
+            db.refresh(preprocess_relationship)
     
     print(f"\n\033[36m[Mini MLOps] \033[32m데이터 정제가 완료되었습니다.")
         
