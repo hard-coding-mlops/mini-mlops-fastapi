@@ -6,7 +6,6 @@ from kobert_tokenizer import KoBERTTokenizer
 
 from models.news_article import NewsArticle
 from models.preprocessed_article import PreprocessedArticle
-from models.preprocess_relationship import PreprocessRelationship
 from database.conn import db_dependency
 from .category_label import category_label
 
@@ -43,7 +42,6 @@ async def preprocess_articles(db: db_dependency):
     preprocessed_articles_length = 0
     for article in non_duplicated_articles:
         preprocessed_article = PreprocessedArticle()
-        preprocess_relationship = PreprocessRelationship()
         article.title = re.sub('[^가-힣 ]', '', article.title).strip()
         article.content = re.sub('[^가-힣 ]', '', article.content).strip()
         length_of_content = len(article.content)
@@ -54,17 +52,11 @@ async def preprocess_articles(db: db_dependency):
             preprocessed_article.category_no = category_label[article.category]
             tokenized_text = tokenizer.tokenize(text)
             preprocessed_article.embedded_inputs = tokenizer.decode(tokenizer.encode(tokenized_text))
+            preprocessed_article.original_article_id = article.id
             
             db.add(preprocessed_article)
             db.commit()
             db.refresh(preprocessed_article)
-            
-            preprocess_relationship.news_article_id = article.id
-            preprocess_relationship.preprocessed_article_id = preprocessed_article.id
-            print(preprocess_relationship.news_article_id, preprocess_relationship.preprocessed_article_id)
-            db.add(preprocess_relationship)
-            db.commit()
-            db.refresh(preprocess_relationship)
     
     print(f"\n\033[36m[Mini MLOps] \033[32m데이터 정제가 완료되었습니다.")
         

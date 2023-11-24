@@ -13,4 +13,4 @@ class NewsArticle(Base):
     scraped_order_no = Column(Integer, ForeignKey("scraped_orders.id"))
         
     scraped_orders = relationship("ScrapedOrder", back_populates = "news_articles")
-    preprocess_relationships = relationship("PreprocessRelationship", back_populates = "news_articles")
+    preprocessed_articles = relationship("PreprocessedArticle", back_populates = "news_articles")

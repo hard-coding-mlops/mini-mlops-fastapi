@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, Column, Integer, DateTime, String, Text
+from sqlalchemy import Boolean, Column, Integer, DateTime, String, Text, ForeignKey
 from sqlalchemy.orm import relationship
 from database.conn import Base
     
@@ -8,5 +8,6 @@ class PreprocessedArticle(Base):
     id = Column(Integer, primary_key = True, index = True)
     category_no = Column(Integer)
     embedded_inputs = Column(Text)
+    original_article_id = Column(Integer, ForeignKey("news_articles.id"))
     
-    preprocess_relationships = relationship("PreprocessRelationship", back_populates = "preprocessed_articles")
+    news_articles = relationship("NewsArticle", back_populates = "preprocessed_articles")
