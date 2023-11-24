@@ -13,8 +13,13 @@ from database.conn import db_dependency
 
 router = APIRouter()
 tokenizer = KoBERTTokenizer.from_pretrained('skt/kobert-base-v1', sp_model_kwargs={'nbest_size': -1, 'alpha': 0.6, 'enable_sampling': True})
+
 @router.get("/total-ordered-data", status_code=status.HTTP_200_OK)
-async def read_all(db: db_dependency):
+async def read_all(
+    db: db_dependency,
+    skip: int = Query(0, description="Skip the first N items", ge=0),
+    limit: int = Query(12, description="Limit the number of items returned", le=100),
+):
     total_ordered_data = []
 
     total_scraped_orders = db.query(ScrapedOrder.id, ScrapedOrder.start_datetime, ScrapedOrder.end_datetime).all()
@@ -36,10 +41,12 @@ async def read_all(db: db_dependency):
 
         total_ordered_data.append(ordered_data)
 
+    paginated_data = total_ordered_data[skip : skip + limit]
+
     return {
         "status": "success",
         "message": "[Mini MLOps] GET data_management/all-data 완료되었습니다.",
-        "data": total_ordered_data,
+        "data": paginated_data,
     }
 
 @router.get("/single-preprocessed-data", status_code = status.HTTP_200_OK)
