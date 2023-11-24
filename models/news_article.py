@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, Column, Integer, DateTime, String, Text
+from sqlalchemy import Column, Integer, DateTime, String, Text, ForeignKey
 from sqlalchemy.orm import relationship
 from database.conn import Base
 
@@ -10,7 +10,7 @@ class NewsArticle(Base):
     title = Column(String(100))
     content = Column(Text)
     upload_datetime = Column(DateTime)
-    scraped_order_no = Column(Integer)
-    
-    
+    scraped_order_no = Column(Integer, ForeignKey("scraped_orders.id"))
+        
+    scraped_orders = relationship("ScrapedOrder", back_populates = "news_articles")
     preprocess_relationships = relationship("PreprocessRelationship", back_populates = "news_articles")
