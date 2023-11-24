@@ -1,10 +1,13 @@
 from fastapi import APIRouter, HTTPException, status, Query
+from fastapi.responses import StreamingResponse
 import traceback
 import pandas as pd
 import re
 from kobert_tokenizer import KoBERTTokenizer
 from sqlalchemy.orm import joinedload
 from sqlalchemy import select, func
+import csv
+import io
 
 from models.news_article import NewsArticle
 from models.scraped_order import ScrapedOrder
@@ -13,6 +16,25 @@ from database.conn import db_dependency
 
 router = APIRouter()
 tokenizer = KoBERTTokenizer.from_pretrained('skt/kobert-base-v1', sp_model_kwargs={'nbest_size': -1, 'alpha': 0.6, 'enable_sampling': True})
+
+@router.get("/download-preprocessed-data", status_code=status.HTTP_200_OK)
+async def download_csv(db: db_dependency, id: int):
+    data = (db.query(PreprocessedArticle.original_article_id, PreprocessedArticle.category_no, PreprocessedArticle.embedded_inputs)
+        .join(NewsArticle, PreprocessedArticle.original_article_id == NewsArticle.id)
+        .filter(NewsArticle.scraped_order_no == id)
+        .all()
+    )
+
+    csv_data = io.StringIO()
+    csv_writer = csv.writer(csv_data)
+    csv_writer.writerow(['original_article_id', 'category_no', 'embedded_inputs'])
+    csv_writer.writerows(data)
+
+    response = StreamingResponse(iter([csv_data.getvalue()]), media_type="text/csv")
+    response.headers["Content-Disposition"] = f"attachment; filename=preprocessed_data_{id}.csv"
+
+    return response
+
 
 @router.get("/total-ordered-data", status_code=status.HTTP_200_OK)
 async def read_all(
