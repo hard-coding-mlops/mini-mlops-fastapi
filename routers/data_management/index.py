@@ -46,7 +46,7 @@ async def read_all(
     return {
         "status": "success",
         "message": "[Mini MLOps] GET data_management/all-data 완료되었습니다.",
-        "data": paginated_data,
+        "total_ordered_data": paginated_data,
     }
 
 @router.get("/single-preprocessed-data", status_code = status.HTTP_200_OK)
