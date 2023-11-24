@@ -67,33 +67,27 @@ async def read_all(
 
     return {
         "status": "success",
-        "message": "[Mini MLOps] GET data_management/all-data 완료되었습니다.",
+        "message": "[Mini MLOps] GET /data_management/all-data 완료되었습니다.",
         "total_ordered_data": paginated_data,
     }
 
 @router.get("/single-preprocessed-data", status_code = status.HTTP_200_OK)
-async def read_single(db: db_dependency):
-    last_scraped_order = (
-        db.query(ScrapedOrder.id)
-        .order_by(ScrapedOrder.id.desc())
-        .limit(1)
-        .first()
-    )[0]
-    last_preprocessed_articles = (
-            db.query(NewsArticle)
-            .options(joinedload(NewsArticle.preprocessed_articles))
-            .filter(NewsArticle.scraped_order_no == last_scraped_order, NewsArticle.preprocessed_articles != None)
-            .all()
-        )
+async def read_single(db: db_dependency, id: int):
+    current_articles = (
+        db.query(NewsArticle)
+        .options(joinedload(NewsArticle.preprocessed_articles))
+        .filter(NewsArticle.scraped_order_no == id, NewsArticle.preprocessed_articles != None)
+        .all()
+    )
     
-    start_datetime = last_preprocessed_articles[0].upload_datetime
-    end_datetime = last_preprocessed_articles[len(last_preprocessed_articles) - 1].upload_datetime
+    start_datetime = current_articles[0].upload_datetime
+    end_datetime = current_articles[len(current_articles) - 1].upload_datetime
         
     return {
         "status": "success",
-        "message": "[Mini MLOps] GET data_management/all-data 완료되었습니다.",
-        "length": len(last_preprocessed_articles),
+        "message": "[Mini MLOps] GET /data_management/single-preprocessed-data/:id 완료되었습니다.",
+        "length": len(current_articles),
         "start_datetime":start_datetime,
         "end_datetime":end_datetime,
-        "data": last_preprocessed_articles
+        "data": current_articles
     }
