@@ -50,7 +50,11 @@ async def read_all(
 ):
     total_ordered_data = []
 
-    total_scraped_orders = db.query(ScrapedOrder.id, ScrapedOrder.start_datetime, ScrapedOrder.end_datetime).all()
+    total_scraped_orders = (
+        db.query(ScrapedOrder.id, ScrapedOrder.start_datetime, ScrapedOrder.end_datetime)
+        .order_by(ScrapedOrder.id.desc())
+        .all()
+    )
 
     for order_id, start_datetime, end_datetime in total_scraped_orders:
         preprocessed_articles_count = (
