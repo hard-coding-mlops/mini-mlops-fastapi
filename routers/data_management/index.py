@@ -13,9 +13,15 @@ from models.news_article import NewsArticle
 from models.scraped_order import ScrapedOrder
 from models.preprocessed_article import PreprocessedArticle
 from database.conn import db_dependency
+from routers import news_scraper, preprocessor
 
 router = APIRouter()
 tokenizer = KoBERTTokenizer.from_pretrained('skt/kobert-base-v1', sp_model_kwargs={'nbest_size': -1, 'alpha': 0.6, 'enable_sampling': True})
+
+@router.get("/scrape-and-preprocess", status_code = status.HTTP_200_OK)
+async def preprocess_articles(db: db_dependency):
+    await news_scraper.index.scrape_news_articles(db)
+    await preprocessor.index.preprocess_articles(db)
 
 @router.get("/download-preprocessed-data/{id}", status_code=status.HTTP_200_OK)
 async def download_csv(db: db_dependency, id: int):
@@ -91,3 +97,39 @@ async def read_single(db: db_dependency, id: int):
         "end_datetime":end_datetime,
         "data": current_articles
     }
+
+@router.delete("/single-group/{id}", status_code=status.HTTP_200_OK)
+async def read_single(db: db_dependency, id: int):
+    try:
+        # 부모 행 가져오기
+        scraped_order = db.query(ScrapedOrder).filter(ScrapedOrder.id == id).first()
+
+        if scraped_order:
+            # 연결된 자식 행들 가져오기
+            news_articles = db.query(NewsArticle).filter(NewsArticle.scraped_order_no == id).all()
+
+            # 연결된 자식 행들 삭제
+            for news_article in news_articles:
+                db.query(PreprocessedArticle).filter(PreprocessedArticle.original_article_id == news_article.id).delete()
+                db.delete(news_article)
+
+            # 부모 행 삭제
+            db.delete(scraped_order)
+            db.commit()
+
+            return {
+                "status": "success",
+                "message": f"[Mini MLOps] GET /data_management/single-group/{id} 완료되었습니다."
+            }
+        else:
+            return {
+                "status": "failure",
+                "message": f"[Mini MLOps] GET /data_management/single-group/{id} 데이터가 없습니다.",
+            }
+    except Exception as e:
+        traceback.print_exc()
+        db.rollback()
+        return {
+            "status": "failure",
+            "message": f"[Mini MLOps] GET /data_management/single-group/{id} 실패했습니다. (데이터 삭제 실패)",
+        }

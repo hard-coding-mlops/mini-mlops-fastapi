@@ -16,7 +16,6 @@ tokenizer = KoBERTTokenizer.from_pretrained('skt/kobert-base-v1', sp_model_kwarg
 
 @router.get("/preprocess", status_code = status.HTTP_200_OK)
 async def preprocess_articles(db: db_dependency):
-    
     last_scraped_order = (
         db.query(NewsArticle.scraped_order_no)
         .order_by(NewsArticle.scraped_order_no.desc())
@@ -70,7 +69,7 @@ async def preprocess_articles(db: db_dependency):
 
 
 @router.get("/scrape-and-preprocess", status_code = status.HTTP_200_OK)
-async def preprocess_articles(db: db_dependency):
+async def qwefpreprocess_articles(db: db_dependency):
     await news_scraper.index.scrape_news_articles(db)
     
     last_scraped_order = (
