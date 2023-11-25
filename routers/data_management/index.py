@@ -17,7 +17,7 @@ from database.conn import db_dependency
 router = APIRouter()
 tokenizer = KoBERTTokenizer.from_pretrained('skt/kobert-base-v1', sp_model_kwargs={'nbest_size': -1, 'alpha': 0.6, 'enable_sampling': True})
 
-@router.get("/download-preprocessed-data", status_code=status.HTTP_200_OK)
+@router.get("/download-preprocessed-data/{id}", status_code=status.HTTP_200_OK)
 async def download_csv(db: db_dependency, id: int):
     data = (db.query(PreprocessedArticle.original_article_id, PreprocessedArticle.category_no, PreprocessedArticle.embedded_inputs)
         .join(NewsArticle, PreprocessedArticle.original_article_id == NewsArticle.id)
