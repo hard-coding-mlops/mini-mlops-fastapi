@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from routers.news_scraper import index as scraper
 from routers.preprocessor import index as preprocessor
+from routers.bert_model import index as bert_model
 from routers.news_classifier import index as classifier
 from routers.data_management import index as data_management
 
@@ -44,6 +45,7 @@ app.include_router(scraper.router, prefix="/scraper")
 app.include_router(preprocessor.router, prefix="/preprocessor")
 
 # 학습
+app.include_router(bert_model.router, prefix="/model")
 
 # 배포
 

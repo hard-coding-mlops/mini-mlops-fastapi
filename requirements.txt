@@ -9,6 +9,13 @@ pymysql==1.1.0
 sqlalchemy==2.0.23
 pandas==2.0.3
 sentencepiece==0.1.99
+transformers==4.32.1
+numpy==1.24.3
+mxnet==1.6.0
+gluonnlp==0.10.0
+pandas==2.0.3
+tqdm==4.65.0
+torch==2.1.1
 
 # kobert_tokenizer==0.1
 'git+https://github.com/SKTBrain/KoBERT.git#egg=kobert_tokenizer&subdirectory=kobert_hf'
