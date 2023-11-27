@@ -81,25 +81,30 @@ async def read_all(
         "total_ordered_data": paginated_data,
     }
 
-@router.get("/single-preprocessed-data", status_code = status.HTTP_200_OK)
+@router.get("/single-group/{id}", status_code = status.HTTP_200_OK)
 async def read_single(db: db_dependency, id: int):
-    current_articles = (
-        db.query(NewsArticle)
-        .options(joinedload(NewsArticle.preprocessed_articles))
-        .filter(NewsArticle.scraped_order_no == id, NewsArticle.preprocessed_articles != None)
+    scraped_order = db.query(ScrapedOrder).filter(ScrapedOrder.id == id).first()
+    current_group_data = (
+        db.query(NewsArticle, PreprocessedArticle)
+        .join(PreprocessedArticle, PreprocessedArticle.original_article_id == NewsArticle.id)
+        .filter(NewsArticle.scraped_order_no == id)
         .all()
     )
     
-    start_datetime = current_articles[0].upload_datetime
-    end_datetime = current_articles[len(current_articles) - 1].upload_datetime
-        
+    preprocessed_articles = []
+    for news_article, preprocessed_article in current_group_data:
+        preprocessed_articles.append(preprocessed_article)
+
+
     return {
         "status": "success",
         "message": "[Mini MLOps] GET /data_management/single-preprocessed-data/:id 완료되었습니다.",
-        "length": len(current_articles),
-        "start_datetime":start_datetime,
-        "end_datetime":end_datetime,
-        "data": current_articles
+        "scraped_order": scraped_order,
+        "preprocessed_articles": preprocessed_articles,
+        # "length": len(current_articles),
+        # "start_datetime":start_datetime,
+        # "end_datetime":end_datetime,
+        # "data": current_articles
     }
 
 @router.delete("/single-group/{id}", status_code=status.HTTP_200_OK)
