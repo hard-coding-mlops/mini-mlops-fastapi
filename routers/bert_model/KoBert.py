@@ -7,7 +7,7 @@ import gluonnlp as nlp
 import numpy as np
 import pandas as pd
 from tqdm import tqdm, tqdm_notebook
-#from tqdm.notebook import tqdm
+from tqdm.notebook import tqdm
 from kobert_tokenizer import KoBERTTokenizer
 from transformers import BertModel
 from transformers import AdamW
