@@ -17,8 +17,9 @@ from routers import news_scraper, preprocessor
 router = APIRouter()
 # tokenizer = KoBERTTokenizer.from_pretrained('skt/kobert-base-v1', sp_model_kwargs={'nbest_size': -1, 'alpha': 0.6, 'enable_sampling': True})
 
-async def preprocessed_articles_to_dataframe(db: db_dependency, id: int):
+async def preprocessed_articles_to_dataframe(db: db_dependency):
     data = (db.query(PreprocessedArticle.original_article_id, PreprocessedArticle.category_no, PreprocessedArticle.formatted_text)
+        .limit(200)
         .all()
     )
 
