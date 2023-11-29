@@ -1,9 +1,8 @@
 from fastapi import APIRouter, HTTPException, status, Query
 from fastapi.responses import StreamingResponse
 import traceback
-import pandas as pd
 import re
-from kobert_tokenizer import KoBERTTokenizer
+# from kobert_tokenizer import KoBERTTokenizer
 from sqlalchemy.orm import joinedload
 from sqlalchemy import select, func
 import csv
@@ -16,12 +15,10 @@ from database.conn import db_dependency
 from routers import news_scraper, preprocessor
 
 router = APIRouter()
-tokenizer = KoBERTTokenizer.from_pretrained('skt/kobert-base-v1', sp_model_kwargs={'nbest_size': -1, 'alpha': 0.6, 'enable_sampling': True})
+# tokenizer = KoBERTTokenizer.from_pretrained('skt/kobert-base-v1', sp_model_kwargs={'nbest_size': -1, 'alpha': 0.6, 'enable_sampling': True})
 
 async def preprocessed_articles_to_dataframe(db: db_dependency, id: int):
     data = (db.query(PreprocessedArticle.original_article_id, PreprocessedArticle.category_no, PreprocessedArticle.formatted_text)
-        .join(NewsArticle, PreprocessedArticle.original_article_id == NewsArticle.id)
-        .filter(NewsArticle.scraped_order_no == id)
         .all()
     )
 

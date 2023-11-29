@@ -1,8 +1,7 @@
 from fastapi import APIRouter, HTTPException, status
 import traceback
-import pandas as pd
 import re
-from kobert_tokenizer import KoBERTTokenizer
+# from kobert_tokenizer import KoBERTTokenizer
 
 from models.news_article import NewsArticle
 from models.preprocessed_article import PreprocessedArticle
@@ -12,7 +11,7 @@ from .category_label import category_label
 from routers import news_scraper
 
 router = APIRouter()
-tokenizer = KoBERTTokenizer.from_pretrained('skt/kobert-base-v1', sp_model_kwargs={'nbest_size': -1, 'alpha': 0.6, 'enable_sampling': True})
+# tokenizer = KoBERTTokenizer.from_pretrained('skt/kobert-base-v1', sp_model_kwargs={'nbest_size': -1, 'alpha': 0.6, 'enable_sampling': True})
 
 @router.get("/preprocess", status_code = status.HTTP_200_OK)
 async def preprocess_articles(db: db_dependency):
@@ -105,8 +104,8 @@ async def qwefpreprocess_articles(db: db_dependency):
             preprocessed_articles_length += 1
             text = article.title + article.content
             preprocessed_article.category_no = category_label[article.category]
-            tokenized_text = tokenizer.tokenize(text)
-            preprocessed_article.embedded_inputs = tokenizer.decode(tokenizer.encode(tokenized_text))
+            preprocessed_article.formatted_text = formatted_text
+            preprocessed_article.original_article_id = article.id
             preprocessed_article.original_article_id = article.id
             
             db.add(preprocessed_article)
