@@ -33,7 +33,7 @@ async def load_data(db:db_dependency):
     print("load_data Start")
 
     result = await preprocessed_articles_to_dataframe(db)
-    
+    print(result)
     preprocess_news_articles = pd.DataFrame(result, columns=['original_article_id', 'category_no', 'formatted_text'])
 
     # CSV 파일 읽기
