@@ -18,14 +18,27 @@ from routers import news_scraper, preprocessor
 router = APIRouter()
 tokenizer = KoBERTTokenizer.from_pretrained('skt/kobert-base-v1', sp_model_kwargs={'nbest_size': -1, 'alpha': 0.6, 'enable_sampling': True})
 
+async def preprocessed_articles_to_dataframe(db: db_dependency, id: int):
+    data = (db.query(PreprocessedArticle.original_article_id, PreprocessedArticle.category_no, PreprocessedArticle.formatted_text)
+        .join(NewsArticle, PreprocessedArticle.original_article_id == NewsArticle.id)
+        .filter(NewsArticle.scraped_order_no == id)
+        .all()
+    )
+
+    return data
+
 @router.get("/scrape-and-preprocess", status_code = status.HTTP_200_OK)
 async def preprocess_articles(db: db_dependency):
     await news_scraper.index.scrape_news_articles(db)
     await preprocessor.index.preprocess_articles(db)
+    return {
+        "status": "success",
+        "message": "[Mini MLOps] GET /data_management/scrape-and-preprocess 완료되었습니다.",
+    }
 
 @router.get("/download-preprocessed-data/{id}", status_code=status.HTTP_200_OK)
 async def download_csv(db: db_dependency, id: int):
-    data = (db.query(PreprocessedArticle.original_article_id, PreprocessedArticle.category_no, PreprocessedArticle.embedded_inputs)
+    data = (db.query(PreprocessedArticle.original_article_id, PreprocessedArticle.category_no, PreprocessedArticle.formatted_text)
         .join(NewsArticle, PreprocessedArticle.original_article_id == NewsArticle.id)
         .filter(NewsArticle.scraped_order_no == id)
         .all()
@@ -33,7 +46,7 @@ async def download_csv(db: db_dependency, id: int):
 
     csv_data = io.StringIO()
     csv_writer = csv.writer(csv_data)
-    csv_writer.writerow(['original_article_id', 'category_no', 'embedded_inputs'])
+    csv_writer.writerow(['original_article_id', 'category_no', 'formatted_text'])
     csv_writer.writerows(data)
 
     response = StreamingResponse(iter([csv_data.getvalue()]), media_type="text/csv")

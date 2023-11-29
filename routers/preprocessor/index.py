@@ -49,12 +49,10 @@ async def preprocess_articles(db: db_dependency):
         
         if length_of_content > 10:
             preprocessed_articles_length += 1
-            text = article.title + article.content
+            formatted_text = article.title + article.content
             preprocessed_article.category_no = category_label[article.category]
-            tokenized_text = tokenizer.tokenize(text)
-            preprocessed_article.embedded_inputs = tokenizer.decode(tokenizer.encode(tokenized_text))
+            preprocessed_article.formatted_text = formatted_text
             preprocessed_article.original_article_id = article.id
-            
             db.add(preprocessed_article)
             db.commit()
             db.refresh(preprocessed_article)
