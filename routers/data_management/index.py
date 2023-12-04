@@ -1,10 +1,6 @@
 from fastapi import APIRouter, HTTPException, status, Query
 from fastapi.responses import StreamingResponse
 import traceback
-import re
-# from kobert_tokenizer import KoBERTTokenizer
-from sqlalchemy.orm import joinedload
-from sqlalchemy.orm import aliased
 from sqlalchemy import select, func, text, sql
 import csv
 import io
@@ -12,43 +8,33 @@ import io
 from models.news_article import NewsArticle
 from models.scraped_order import ScrapedOrder
 from models.preprocessed_article import PreprocessedArticle
-from database.conn import db_dependency,session
+from database.conn import db_dependency
 from routers import news_scraper, preprocessor
-
 
 router = APIRouter()
 
 #각 분야별 150개 씩 가져온다(총 1200 개)
-@router.get("/test", status_code = status.HTTP_200_OK)
-def preprocessed_articles_to_dataframe(num:int):
-    #db:db_dependency
-    print("preprocessed 실행")
-    subquery = (
-        select([
-            PreprocessedArticle.category_no,PreprocessedArticle.formatted_text,
-            func.row_number().over(
-                order_by=PreprocessedArticle.id,
-                partition_by=PreprocessedArticle.category_no
-            ).label('row_num')
-        ])
-        .where(PreprocessedArticle.category_no == PreprocessedArticle.category_no)
-        .alias()
-    )
+@router.get("/test/{num}", status_code = status.HTTP_200_OK)
+def preprocessed_articles(db: db_dependency, num:int):
+    result = []
 
-    # 서브쿼리에 대한 alias를 생성합니다.
-    subq_alias = aliased(subquery)
+    for category_no in range(8):  # 0부터 7까지의 category_no
+        data = (
+            db.query(PreprocessedArticle.category_no, PreprocessedArticle.formatted_text)
+            .filter(PreprocessedArticle.category_no == category_no)
+            .limit(num)
+            .all()
+        )
 
-    # 메인 쿼리를 작성합니다.
-    main_query = (
-        select([subq_alias])
-        .where(subq_alias.c.row_num <= num)
-    )
- 
-    # 결과를 가져옵니다
-    
-    data = session.execute(main_query).all()
-    print("preprocessed End")
-    return data
+        category_data = [{"category_no": category_no, "formatted_text": formatted_text} for _, formatted_text in data]
+        result.extend(category_data)
+
+    return {
+        "status": "success",
+        "message": f"[Mini MLOps] GET /data_management/test/{num} 완료되었습니다.",
+        "length": len(result),
+        "data": result
+    }
 
 @router.get("/scrape-and-preprocess", status_code = status.HTTP_200_OK)
 async def preprocess_articles(db: db_dependency):
