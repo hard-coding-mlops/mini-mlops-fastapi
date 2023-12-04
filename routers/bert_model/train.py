@@ -35,12 +35,10 @@ def define_argparser():
         'data_num' : 150,
         'acc' : 0.0,
         'loss': 0.0,
-        'train_acc_list' : [],
-        'test_acc_list' : [],
-        'train_loss_list' : [],
-        'test_loss_list' : [],
-        'labels' : [],
-        'predicted_labels' : []
+        'accuracy' : 0.0,
+        'precision' : 0.0,
+        'recall' : 0.0,
+        'f1' : 0.0
     }
     
     # p = argparse.ArgumentParser()
@@ -69,8 +67,6 @@ def main(config):
     print("hello")
     # Set device based on user defined configuration.
     device = torch.device('cpu') if config['gpu_id'] < 0 else torch.device('cuda:%d' % config['gpu_id'])
-    
-    
     
     data_list = load_data(config['data_num'])
     print(data_list)
@@ -110,7 +106,7 @@ def main(config):
         'model': trainer.model.state_dict(),
         'opt': optimizer.state_dict(),
         'config': config,
-    }, config['model_fn'])
+    }, './model/'+config['model_fn'])
     
 ###############################################################################################
 

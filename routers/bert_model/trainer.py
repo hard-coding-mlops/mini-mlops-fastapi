@@ -4,7 +4,7 @@ from tqdm import tqdm, tqdm_notebook
 from transformers.optimization import get_cosine_schedule_with_warmup
 import time
 from copy import deepcopy
-
+from graph import acc_loss_graph
 class Trainer():
     def __init__(self, model, optimizer, loss_fn, device):
         self.model = model
@@ -74,7 +74,6 @@ class Trainer():
             loss = self.loss_fn(out, label)
             test_loss += loss.data.cpu().numpy()
         
-            
         test_end = time.time()
         test_elapsed = test_end - test_start
         print("epoch {} test acc {} test loss {} ElapsedTime {}m {}s".format(e+1, test_acc / (batch_id+1),test_loss / (batch_id+1) ,test_elapsed//60, test_elapsed%60))
@@ -91,14 +90,24 @@ class Trainer():
 
         start = time.time()
         Pelapsed = 0
+        train_acc_list = []
+        test_acc_list = []
+        train_loss_list = []
+        test_loss_list = []
+        labels = []
+        predicted_labels = []
+        
         for e in range(config['num_epochs']):
             train_acc,train_loss = self._train(train_dataloader,config, scheduler, e)
             test_acc,test_loss = self._validate(test_dataloader,config, e)
             
-            config['train_acc_list'].append(train_acc)
-            config['test_acc_list'].append(test_acc)
-            config['train_loss_list'].append(train_loss)
-            config['test_loss_list'].append(test_loss)
+            train_acc_list.append(train_acc)
+            test_acc_list.append(test_acc)
+            train_loss_list.append(train_loss)
+            test_loss_list.append(test_loss)
+        
+        acc_loss_graph(config, train_acc_list, test_acc_list, train_loss_list,test_loss_list)
+        
         total_end = time.time()
         total_elapsed = total_end - start
         print("Total_ElapsedTime : {} m {} s".format(total_elapsed//60 , total_elapsed%60))

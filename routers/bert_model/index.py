@@ -37,12 +37,10 @@ async def learn(db: db_dependency, params: Parameters):
         "gpu_id": 0 if torch.cuda.is_available() else -1,
         'acc' : 0.0,
         'loss': 0.0,
-        'train_acc_list' : [],
-        'test_acc_list' : [],
-        'train_loss_list' : [],
-        'test_loss_list' : [],
-        'labels' : [],
-        'predicted_labels' : []
+        'accuracy' : 0.0,
+        'precision' : 0.0,
+        'recall' : 0.0,
+        'f1' : 0.0
     }
     print(config)
     main(config)
