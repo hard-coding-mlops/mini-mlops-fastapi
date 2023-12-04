@@ -4,25 +4,50 @@ import traceback
 import re
 # from kobert_tokenizer import KoBERTTokenizer
 from sqlalchemy.orm import joinedload
-from sqlalchemy import select, func
+from sqlalchemy.orm import aliased
+from sqlalchemy import select, func, text, sql
 import csv
 import io
 
 from models.news_article import NewsArticle
 from models.scraped_order import ScrapedOrder
 from models.preprocessed_article import PreprocessedArticle
-from database.conn import db_dependency
+from database.conn import db_dependency,session
 from routers import news_scraper, preprocessor
 
-router = APIRouter()
-# tokenizer = KoBERTTokenizer.from_pretrained('skt/kobert-base-v1', sp_model_kwargs={'nbest_size': -1, 'alpha': 0.6, 'enable_sampling': True})
 
-async def preprocessed_articles_to_dataframe(db: db_dependency):
-    data = (db.query(PreprocessedArticle.original_article_id, PreprocessedArticle.category_no, PreprocessedArticle.formatted_text)
-        .limit(200)
-        .all()
+router = APIRouter()
+
+#각 분야별 150개 씩 가져온다(총 1200 개)
+@router.get("/test", status_code = status.HTTP_200_OK)
+def preprocessed_articles_to_dataframe(num:int):
+    #db:db_dependency
+    print("preprocessed 실행")
+    subquery = (
+        select([
+            PreprocessedArticle.category_no,PreprocessedArticle.formatted_text,
+            func.row_number().over(
+                order_by=PreprocessedArticle.id,
+                partition_by=PreprocessedArticle.category_no
+            ).label('row_num')
+        ])
+        .where(PreprocessedArticle.category_no == PreprocessedArticle.category_no)
+        .alias()
     )
 
+    # 서브쿼리에 대한 alias를 생성합니다.
+    subq_alias = aliased(subquery)
+
+    # 메인 쿼리를 작성합니다.
+    main_query = (
+        select([subq_alias])
+        .where(subq_alias.c.row_num <= num)
+    )
+ 
+    # 결과를 가져옵니다
+    
+    data = session.execute(main_query).all()
+    print("preprocessed End")
     return data
 
 @router.get("/scrape-and-preprocess", status_code = status.HTTP_200_OK)

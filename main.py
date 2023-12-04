@@ -1,3 +1,4 @@
+import uvicorn
 from fastapi import FastAPI, HTTPException, Depends, status
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Annotated
@@ -15,7 +16,6 @@ from database.conn import engine, SessionLocal
 app = FastAPI()
 news_article.Base.metadata.create_all(bind = engine)
 preprocessed_article.Base.metadata.create_all(bind = engine)
-
 
 # 미들웨어
 # CORS 정책
@@ -53,3 +53,6 @@ app.include_router(bert_model.router, prefix="/model")
 app.include_router(classifier.router, prefix="/classifier")
 
 print(f'Documents: http://localhost:8000/docs')
+
+if __name__ == '__main__':
+    uvicorn.run("main:app", reload=True)

@@ -22,6 +22,7 @@ DATABASE_URL = f"mysql+pymysql://{DATABASE_USERNAME}:{DATABASE_PASSWORD}@{DATABA
 
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit = False, autoflush = False, bind = engine)
+session = SessionLocal()
 
 Base = declarative_base()
 

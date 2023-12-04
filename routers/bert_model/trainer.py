@@ -1,6 +1,9 @@
 import torch
+import numpy as np
 from tqdm import tqdm, tqdm_notebook
 from transformers.optimization import get_cosine_schedule_with_warmup
+import time
+from copy import deepcopy
 
 class Trainer():
     def __init__(self, model, optimizer, loss_fn, device):
@@ -17,54 +20,96 @@ class Trainer():
         return train_acc
 
     def _train(self, train_dataloader, config, scheduler ,e):
+        print("_train Start")
         train_acc = 0.0
-
+        train_loss = 0.0
+        train_start = time.time()
+        
         self.model.train()
         # token_ids: 토큰의 인덱스
         # valid_length: 실제 데이터의 길이
         # segment_ids: 세그먼트 ID (일부 모델에서 사용)
-        for batch_id, (token_ids, valid_length, segment_ids, label) in enumerate(tqdm_notebook(train_dataloader)):
+        for batch_id, (token_ids, valid_length, segment_ids, label) in enumerate(tqdm(train_dataloader)):
             self.optimizer.zero_grad()
             token_ids = token_ids.long().to(self.device)
-            segment_ids = segment_ids.long().to(self.device) 
+            segment_ids = segment_ids.long().to(self.device)
             valid_length= valid_length
             label = label.long().to(self.device)
             out = self.model(token_ids, valid_length, segment_ids)
             
             loss = self.loss_fn(out, label)
             loss.backward()
-            torch.nn.utils.clip_grad_norm_(self.model.parameters(), config.max_grad_norm)
+            torch.nn.utils.clip_grad_norm_(self.model.parameters(), config['max_grad_norm'])
             self.optimizer.step()
             scheduler.step()  # Update learning rate schedule
-            train_acc += self.calc_accuracy(out, label)
-            if batch_id % config.log_interval == 0:
+            train_acc += self._calc_accuracy(out, label)
+            train_loss += loss.data.cpu().numpy()
+            
+            if batch_id % config['log_interval'] == 0:
                 print("epoch {} batch id {} loss {} train acc {}".format(e+1, batch_id+1, loss.data.cpu().numpy(), train_acc / (batch_id+1)))
-        print("epoch {} train acc {}".format(e+1, train_acc / (batch_id+1)))
-        return train_acc
+        
+        train_end = time.time()
+        train_elapsed = train_end - train_start
+        print("epoch {} train acc {} train loss {} ElapsedTime {} m {} s".format(e+1, train_acc / (batch_id+1), train_loss / (batch_id+1) , train_elapsed//60, train_elapsed%60))
+        
+        print("_train End")
+        
+        return train_acc / (batch_id+1), train_loss / (batch_id+1)
 
     def _validate(self, test_dataloader, config, e):
         test_acc = 0.0
+        test_loss = 0.0
+        test_start = time.time()
+        
         self.model.eval()
-        for batch_id, (token_ids, valid_length, segment_ids, label) in enumerate(tqdm_notebook(test_dataloader)):
+        for batch_id, (token_ids, valid_length, segment_ids, label) in enumerate(tqdm(test_dataloader)):
             token_ids = token_ids.long().to(self.device)
             segment_ids = segment_ids.long().to(self.device)
             valid_length= valid_length
             label = label.long().to(self.device)
+            config['labels'].extend(label.cpu().numpy().tolist())
             out = self.model(token_ids, valid_length, segment_ids)
+            config['predicted_labels'].extend(torch.argmax(out, axis=1).cpu().numpy().tolist())
             test_acc += self._calc_accuracy(out, label)
-        print("epoch {} test acc {}".format(e+1, test_acc / (batch_id+1)))
-        return test_acc
+            loss = self.loss_fn(out, label)
+            test_loss += loss.data.cpu().numpy()
+        
+            
+        test_end = time.time()
+        test_elapsed = test_end - test_start
+        print("epoch {} test acc {} test loss {} ElapsedTime {}m {}s".format(e+1, test_acc / (batch_id+1),test_loss / (batch_id+1) ,test_elapsed//60, test_elapsed%60))
+        return test_acc / (batch_id+1), test_loss / (batch_id+1)
 
     def train(self, train_dataloader, test_dataloader, config):
         print("train Start")
-        t_total = len(train_dataloader) * config.num_epochs
-        warmup_step = int(t_total * config.warmup_ratio)
+        lowest_loss = np.inf
+        best_model = None
+        t_total = len(train_dataloader) * config['num_epochs']
+        warmup_step = int(t_total * config['warmup_ratio'])
 
         scheduler = get_cosine_schedule_with_warmup(self.optimizer, num_warmup_steps=warmup_step, num_training_steps=t_total)
 
-        for e in range(config.num_epochs):
-            train_acc = self._train(train_dataloader,config, scheduler, e)
-            test_acc = self._validate(test_dataloader,config, e)
+        start = time.time()
+        Pelapsed = 0
+        for e in range(config['num_epochs']):
+            train_acc,train_loss = self._train(train_dataloader,config, scheduler, e)
+            test_acc,test_loss = self._validate(test_dataloader,config, e)
+            
+            config['train_acc_list'].append(train_acc)
+            config['test_acc_list'].append(test_acc)
+            config['train_loss_list'].append(train_loss)
+            config['test_loss_list'].append(test_loss)
+        total_end = time.time()
+        total_elapsed = total_end - start
+        print("Total_ElapsedTime : {} m {} s".format(total_elapsed//60 , total_elapsed%60))
+        
+        if test_loss <= lowest_loss:
+            lowest_loss = test_loss
+            config['acc'] = test_acc
+            config['loss'] = test_loss
+            best_model = deepcopy(self.model.state_dict())
+        
+        self.model.load_state_dict(best_model)
         print("train End")
         #########################################################################################
 
