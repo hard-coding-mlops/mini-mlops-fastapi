@@ -8,14 +8,15 @@ from kobert_tokenizer import KoBERTTokenizer
 from transformers import BertModel
 
 from torch.utils.data import DataLoader
-from data import load_data,split_data
-from data import BERTDataset
-from model import BERTClassifier
+from .data import load_data,split_data
+from .data import BERTDataset
+from .model import BERTClassifier
+from routers.data_management.index import preprocessed_articles
 
 from transformers import AdamW
 from transformers.optimization import get_cosine_schedule_with_warmup
 
-from trainer import Trainer
+from .trainer import Trainer
 
 def define_argparser():
     print("define_argparser Start")
@@ -62,10 +63,15 @@ def define_argparser():
     print("define_argparser End")
     return config
 
+
+
 def main(config):
+    print("hello")
     # Set device based on user defined configuration.
     device = torch.device('cpu') if config['gpu_id'] < 0 else torch.device('cuda:%d' % config['gpu_id'])
-
+    
+    
+    
     data_list = load_data(config['data_num'])
     print(data_list)
     # from_pretrained : 웹에서 모델을 다운로드
@@ -76,7 +82,7 @@ def main(config):
     tok = tokenizer.tokenize
     print("max_len = ", config['max_len'])
     data_list = BERTDataset(data_list, 0, 1, tok, vocab, config['max_len'], True, False)
-    print("", data_list[5])
+    # print("", data_list[5])
     data_train, data_test = split_data(data_list,config)
     
 

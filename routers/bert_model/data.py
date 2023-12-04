@@ -6,8 +6,8 @@ from torch.utils.data import Dataset, DataLoader
 import asyncio
 
 import sys
-sys.path.append('C:/Users/admin/mini-mlops-fastapi')
-from routers.data_management.index import preprocessed_articles_to_dataframe
+sys.path.append('C:/Users/admin/monte/hard-coding/mini-mlops-fastapi')
+from routers.data_management.index import preprocessed_articles
 from database.conn import db_dependency
 #from database.conn import db_dependency
 # 이제 모듈을 import할 수 있어야 함
@@ -36,7 +36,7 @@ class BERTDataset(Dataset):
 def load_data(data_num:int):
     print("load_data Start")
 
-    result = preprocessed_articles_to_dataframe(data_num)
+    result = preprocessed_articles(data_num)
     preprocess_news_articles = pd.DataFrame(result)
     
     # CSV 파일 읽기

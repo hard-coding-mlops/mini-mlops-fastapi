@@ -1,19 +1,53 @@
-from fastapi import APIRouter, HTTPException, status, Query
-#from .KoBert import bert_learn
-from models.preprocessed_article import PreprocessedArticle
+from fastapi import APIRouter, Request, HTTPException, status, Query
 from database.conn import db_dependency
+from pydantic import BaseModel
+
+import torch
+from .train import main
+
+from routers.data_management.index import preprocessed_articles
+
+class Parameters(BaseModel):
+    model_filename: str
+    max_len: int
+    batch_size: int
+    num_epochs: int
+    warmup_ratio: float
+    max_grad_norm: int
+    learning_rate: float
+    split_rate: float
+    data_length: int
+    
 
 router = APIRouter()
 
-def add_embeddinglist_to_preprocessed_article(db: db_dependency, embedding_list):
-    return 0
-
-# @router.get("/learn/{id}", status_code = status.HTTP_200_OK)
-# async def learn(db: db_dependency, id: int):
-#     result = await bert_learn(db, id)
-#     print(result)
-#     return {
-#         "status": "success",
-#         "message": "[Mini MLOps] GET /model/learn 완료되었습니다.",
-#         "data": result['formatted_text']
-#     }
+@router.post("/learn")
+async def learn(db: db_dependency, params: Parameters):
+    config = {
+        'model_fn': f"{params.model_filename}.pth",
+        'max_len' : params.max_len,
+        'batch_size' :params.batch_size,
+        'num_epochs' :params.num_epochs,
+        'warmup_ratio' :params.warmup_ratio,
+        'max_grad_norm' :params.max_grad_norm,
+        'log_interval' : 200,
+        'learning_rate' :params.learning_rate,
+        'split_rate' :params.split_rate,
+        'data_num' :params.data_length,
+        "gpu_id": 0 if torch.cuda.is_available() else -1,
+        'acc' : 0.0,
+        'loss': 0.0,
+        'train_acc_list' : [],
+        'test_acc_list' : [],
+        'train_loss_list' : [],
+        'test_loss_list' : [],
+        'labels' : [],
+        'predicted_labels' : []
+    }
+    print(config)
+    main(config)
+    
+    return {
+        "status": "success",
+        "message": "[Mini MLOps] GET /model/learn 완료되었습니다.",
+    }

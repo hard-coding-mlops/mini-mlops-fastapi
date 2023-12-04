@@ -8,33 +8,27 @@ import io
 from models.news_article import NewsArticle
 from models.scraped_order import ScrapedOrder
 from models.preprocessed_article import PreprocessedArticle
-from database.conn import db_dependency
+from database.conn import db_dependency, session
 from routers import news_scraper, preprocessor
 
 router = APIRouter()
 
 #각 분야별 150개 씩 가져온다(총 1200 개)
-@router.get("/test/{num}", status_code = status.HTTP_200_OK)
-def preprocessed_articles(db: db_dependency, num:int):
+def preprocessed_articles(num:int):
     result = []
 
     for category_no in range(8):  # 0부터 7까지의 category_no
         data = (
-            db.query(PreprocessedArticle.category_no, PreprocessedArticle.formatted_text)
+            session.query(PreprocessedArticle.category_no, PreprocessedArticle.formatted_text)
             .filter(PreprocessedArticle.category_no == category_no)
             .limit(num)
             .all()
         )
+    return data
+    #     category_data = [{"category_no": category_no, "formatted_text": formatted_text} for _, formatted_text in data]
+    #     result.extend(category_data)
 
-        category_data = [{"category_no": category_no, "formatted_text": formatted_text} for _, formatted_text in data]
-        result.extend(category_data)
-
-    return {
-        "status": "success",
-        "message": f"[Mini MLOps] GET /data_management/test/{num} 완료되었습니다.",
-        "length": len(result),
-        "data": result
-    }
+    # return result
 
 @router.get("/scrape-and-preprocess", status_code = status.HTTP_200_OK)
 async def preprocess_articles(db: db_dependency):
