@@ -13,4 +13,4 @@ class Epoch(Base):
     train_loss = Column(Float)
     test_loss = Column(Float)
     
-    news_articles = relationship("Model", back_populates = "epochs")
+    models = relationship("Model", back_populates = "epochs")

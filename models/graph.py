@@ -11,6 +11,6 @@ class Graph(Base):
     loss_graph = Column(BLOB)
     confusion_graph = Column(BLOB)
     
-    news_articles = relationship("Model", back_populates = "graphs")
+    models = relationship("Model", back_populates = "graphs")
     
     

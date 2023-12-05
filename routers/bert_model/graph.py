@@ -8,10 +8,9 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_sc
 #from index.
 
 def acc_loss_graph(config,train_acc_list, test_acc_list, train_loss_list,test_loss_list):
-    d = torch.load("./model/" + config['model_fn'])
     #d = torch.load(fn, map_location=device)
-    print("acc : ", d['config']['acc'])
-    print("loss : ", d['config']['loss'])
+    print("acc : ", config['acc'])
+    print("loss : ", config['loss'])
     
     # Plot training and validation accuracy
     plt.figure(figsize=(10, 5))
@@ -51,7 +50,7 @@ def confusion_matrix(config, labels, predicted_labels):
     plt.xlabel('Predicted')
     plt.ylabel('Actual')
     plt.title('Confusion Matrix')
-    plt.savefig('./image/' + config['model_fn'][:-4]+ '_confusion.jpg')
+    plt.savefig('./image/' + config['model_fn'][:-4]+ '_confusion.jpg', bbox_inches='tight')
     plt.show()
     
     # 정확도, 정밀도, 재현율, F1 점수 계산

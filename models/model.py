@@ -8,5 +8,5 @@ class Model(Base):
     model_id = Column(Integer, primary_key = True, index = True)
     model_name = Column(Text)
     
-    news_articles = relationship("Graph", back_populates = "models")
-    news_articles = relationship("Epoch", back_populates = "models")
+    graphs = relationship("Graph", back_populates = "models")
+    epochs = relationship("Epoch", back_populates = "models")

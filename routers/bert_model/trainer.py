@@ -1,5 +1,5 @@
 from .graph import acc_loss_graph,confusion_matrix
-#from .index import save_graph
+from .save import save_graph,save_model, save_epoch
 import torch
 import numpy as np
 from tqdm import tqdm, tqdm_notebook
@@ -102,8 +102,8 @@ class Trainer():
         predicted_labels = []
         
         for e in range(config['num_epochs']):
-            train_acc,train_loss,label,predicted_label = self._train(train_dataloader,config, scheduler, e)
-            test_acc,test_loss = self._validate(test_dataloader,config, e)
+            train_acc,train_loss = self._train(train_dataloader,config, scheduler, e)
+            test_acc,test_loss,label,predicted_label = self._validate(test_dataloader,config, e)
             
             train_acc_list.append(train_acc)
             test_acc_list.append(test_acc)
@@ -114,8 +114,11 @@ class Trainer():
         
         
         acc_loss_graph(config, train_acc_list, test_acc_list, train_loss_list,test_loss_list)
-        #save_graph(config)
         confusion_matrix(config, labels, predicted_labels)
+        model_id = save_model(config['model_fn'][:-4])
+        save_graph(config['model_fn'][:-4], model_id)
+        save_epoch(config,model_id,train_acc_list, train_loss_list, test_acc_list,test_loss_list)
+        
         
         total_end = time.time()
         total_elapsed = total_end - start

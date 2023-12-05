@@ -4,8 +4,6 @@ from pydantic import BaseModel
 
 import torch
 from .train import main
-
-from models.graph import Graph
 class Parameters(BaseModel):
     model_filename: str
     max_len: int
@@ -48,17 +46,3 @@ async def learn(db: db_dependency, params: Parameters):
         "status": "success",
         "message": "[Mini MLOps] GET /model/learn 완료되었습니다.",
     }
-#@router.post("/save")
-def save_graph(config):
-    file_path = './image/'
-    acc_image = f'{file_path}{config["model_fn"]}_acc.jpg';
-    loss_image = f'{file_path}{config["model_fn"]}_loss.jpg';
-    
-    graph = Graph
-    graph.acc_graph = acc_image
-    graph.loss_graph = loss_image
-    
-    session.add(graph)
-    session.commit()
-    session.refresh(graph)
-    
