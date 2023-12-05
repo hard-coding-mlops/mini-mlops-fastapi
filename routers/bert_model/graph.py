@@ -35,7 +35,7 @@ def acc_loss_graph(config,train_acc_list, test_acc_list, train_loss_list,test_lo
     plt.savefig('./image/' + config['model_fn'][:-4]+ '_loss.jpg')
     plt.show()
     
-    # 이미지 db 저장
+    
     
 def confusion_matrix(config, labels, predicted_labels):
     # 예측값과 실제값을 가지고 있는 리스트를 생성합니다.

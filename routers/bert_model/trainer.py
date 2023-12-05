@@ -1,10 +1,12 @@
+from .graph import acc_loss_graph,confusion_matrix
+#from .index import save_graph
 import torch
 import numpy as np
 from tqdm import tqdm, tqdm_notebook
 from transformers.optimization import get_cosine_schedule_with_warmup
 import time
 from copy import deepcopy
-from graph import acc_loss_graph
+
 class Trainer():
     def __init__(self, model, optimizer, loss_fn, device):
         self.model = model
@@ -60,6 +62,8 @@ class Trainer():
         test_acc = 0.0
         test_loss = 0.0
         test_start = time.time()
+        labels = []
+        predicted_labels = []
         
         self.model.eval()
         for batch_id, (token_ids, valid_length, segment_ids, label) in enumerate(tqdm(test_dataloader)):
@@ -67,9 +71,9 @@ class Trainer():
             segment_ids = segment_ids.long().to(self.device)
             valid_length= valid_length
             label = label.long().to(self.device)
-            config['labels'].extend(label.cpu().numpy().tolist())
+            labels.extend(label.cpu().numpy().tolist())
             out = self.model(token_ids, valid_length, segment_ids)
-            config['predicted_labels'].extend(torch.argmax(out, axis=1).cpu().numpy().tolist())
+            predicted_labels.extend(torch.argmax(out, axis=1).cpu().numpy().tolist())
             test_acc += self._calc_accuracy(out, label)
             loss = self.loss_fn(out, label)
             test_loss += loss.data.cpu().numpy()
@@ -77,7 +81,7 @@ class Trainer():
         test_end = time.time()
         test_elapsed = test_end - test_start
         print("epoch {} test acc {} test loss {} ElapsedTime {}m {}s".format(e+1, test_acc / (batch_id+1),test_loss / (batch_id+1) ,test_elapsed//60, test_elapsed%60))
-        return test_acc / (batch_id+1), test_loss / (batch_id+1)
+        return test_acc / (batch_id+1), test_loss / (batch_id+1), labels, predicted_labels
 
     def train(self, train_dataloader, test_dataloader, config):
         print("train Start")
@@ -98,15 +102,20 @@ class Trainer():
         predicted_labels = []
         
         for e in range(config['num_epochs']):
-            train_acc,train_loss = self._train(train_dataloader,config, scheduler, e)
+            train_acc,train_loss,label,predicted_label = self._train(train_dataloader,config, scheduler, e)
             test_acc,test_loss = self._validate(test_dataloader,config, e)
             
             train_acc_list.append(train_acc)
             test_acc_list.append(test_acc)
             train_loss_list.append(train_loss)
             test_loss_list.append(test_loss)
+            labels.extend(label)
+            predicted_labels.extend(predicted_label)
+        
         
         acc_loss_graph(config, train_acc_list, test_acc_list, train_loss_list,test_loss_list)
+        #save_graph(config)
+        confusion_matrix(config, labels, predicted_labels)
         
         total_end = time.time()
         total_elapsed = total_end - start

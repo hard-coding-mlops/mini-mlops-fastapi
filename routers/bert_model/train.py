@@ -100,7 +100,7 @@ def main(config):
 
     trainer = Trainer(model, optimizer, loss_fn, device)
     trainer.train(train_dataloader, test_dataloader, config=config)
-
+    
     # Save best model weights.
     torch.save({
         'model': trainer.model.state_dict(),
