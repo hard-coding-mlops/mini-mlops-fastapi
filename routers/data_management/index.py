@@ -8,7 +8,7 @@ import io
 from models.news_article import NewsArticle
 from models.scraped_order import ScrapedOrder
 from models.preprocessed_article import PreprocessedArticle
-from database.conn import db_dependency, SessionLocal
+from database.conn import db_dependency, SessionLocal, session
 from routers import news_scraper, preprocessor
 
 router = APIRouter()

@@ -1,13 +1,12 @@
 #from .index import save_graph
+from .graph import acc_loss_graph, confusion_matrix
+from .save import save_graph, save_model, save_epoch
 import torch
 import numpy as np
 from tqdm import tqdm, tqdm_notebook
 from transformers.optimization import get_cosine_schedule_with_warmup
 import time
 from copy import deepcopy
-
-from .graph import acc_loss_graph, confusion_graph
-from .save import save_graph,save_model, save_epoch
 
 class Trainer():
     def __init__(self, model, optimizer, loss_fn, device):
@@ -105,7 +104,7 @@ class Trainer():
         
         for e in range(config['num_epochs']):
             train_acc,train_loss = self._train(train_dataloader,config, scheduler, e)
-            test_acc,test_loss,label,predicted_label  = self._validate(test_dataloader,config, e)
+            test_acc,test_loss,label,predicted_label = self._validate(test_dataloader,config, e)
             
             train_acc_list.append(train_acc)
             test_acc_list.append(test_acc)

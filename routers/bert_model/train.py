@@ -13,10 +13,10 @@ from .data import BERTDataset
 from .model import BERTClassifier
 from .trainer import Trainer
 from .graph import acc_loss_graph,confusion_graph
+from routers.data_management.index import preprocessed_articles
 
 from transformers import AdamW
 from transformers.optimization import get_cosine_schedule_with_warmup
-
 
 def define_argparser():
     print("define_argparser Start")
@@ -40,6 +40,21 @@ def define_argparser():
         'recall' : 0.0,
         'f1' : 0.0
     }
+    
+    # p = argparse.ArgumentParser()
+
+    # p.add_argument('--model_fn', required=True)
+    # p.add_argument('--gpu_id', type=int, default=0 if torch.cuda.is_available() else -1)
+    # #해당 길이를 초과하는 단어에 대해서는 bert가 학습하지 않는다
+    # p.add_argument('--max_len', type=int, default=512)
+    # p.add_argument('--batch_size', type=int, default=8)
+    # p.add_argument('--num_epochs', type=int, default=5)
+    # #warmup 비율만큼의 학습 스텝 동안 learning rate를 증가
+    # p.add_argument('--warmup_ratio', type=float, default=0.1)
+    # p.add_argument('--max_grad_norm', type=int, default=1)
+    # # 몇 번의 배치마다 로그를 출력할지 나타냅니다
+    # p.add_argument('--log_interval', type=int, default=200)
+    # p.add_argument('--learning_rate', type=float, default=5e-5)
 
     config = model_parameter_dict
 
