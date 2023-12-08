@@ -20,7 +20,9 @@ preprocessed_article.Base.metadata.create_all(bind = engine)
 # 미들웨어
 # CORS 정책
 origins = [
-    "http://localhost:3000"
+    "http://localhost:3000",
+    "http://211.62.99.58:3000",
+    "http://211.62.99.58:3010"
     ]
 app.add_middleware(
     CORSMiddleware,

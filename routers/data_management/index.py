@@ -1,29 +1,36 @@
 from fastapi import APIRouter, HTTPException, status, Query
 from fastapi.responses import StreamingResponse
 import traceback
-import re
-# from kobert_tokenizer import KoBERTTokenizer
-from sqlalchemy.orm import joinedload
-from sqlalchemy import select, func
+from sqlalchemy import select, func, text, sql
 import csv
 import io
 
 from models.news_article import NewsArticle
 from models.scraped_order import ScrapedOrder
 from models.preprocessed_article import PreprocessedArticle
-from database.conn import db_dependency
+from database.conn import db_dependency, SessionLocal
 from routers import news_scraper, preprocessor
 
 router = APIRouter()
-# tokenizer = KoBERTTokenizer.from_pretrained('skt/kobert-base-v1', sp_model_kwargs={'nbest_size': -1, 'alpha': 0.6, 'enable_sampling': True})
 
-async def preprocessed_articles_to_dataframe(db: db_dependency):
-    data = (db.query(PreprocessedArticle.original_article_id, PreprocessedArticle.category_no, PreprocessedArticle.formatted_text)
-        .limit(200)
-        .all()
-    )
+#각 분야별 150개 씩 가져온다(총 1200 개)
+def preprocessed_articles(num:int):
+    result = []
+    session = SessionLocal()
+    for category_no in range(8):  # 0부터 7까지의 category_no
+        data = (
+            session.query(PreprocessedArticle.category_no, PreprocessedArticle.formatted_text)
+            .filter(PreprocessedArticle.category_no == category_no)
+            .limit(num)
+            .all()
+        )
+        print(f'#{category_no} data: {data}')
+        result.extend(data)
+    return result
+    #     category_data = [{"category_no": category_no, "formatted_text": formatted_text} for _, formatted_text in data]
+    #     result.extend(category_data)
 
-    return data
+    # return result
 
 @router.get("/scrape-and-preprocess", status_code = status.HTTP_200_OK)
 async def preprocess_articles(db: db_dependency):
