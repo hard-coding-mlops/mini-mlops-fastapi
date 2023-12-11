@@ -2,6 +2,9 @@ from sqlalchemy import Column, Integer, Date, Text, Float
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from database.conn import Base
+from .graph import Graph
+from .epoch import Epoch
+from .deployment import Deployment
 
 class Model(Base):
     __tablename__ = "models"
@@ -19,9 +22,11 @@ class Model(Base):
     data_length = Column(Integer)   # 1200
     accuracy = Column(Float)        # 82.193
     loss = Column(Float)            # 41.232
-    precision = Column(Float)       # 0.0
+    precision_value = Column(Float)       # 0.0
     recall = Column(Float)          # 0.0
     f1 = Column(Float)              # 0.0
+    # deployed_at
+    # active
     
     graphs = relationship("Graph", back_populates = "models")
     epochs = relationship("Epoch", back_populates = "models")

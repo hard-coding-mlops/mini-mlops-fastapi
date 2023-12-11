@@ -8,18 +8,20 @@ import io
 from models.news_article import NewsArticle
 from models.scraped_order import ScrapedOrder
 from models.preprocessed_article import PreprocessedArticle
-from database.conn import db_dependency, SessionLocal, session
+from models.model import Model
+from models.graph import Graph
+from models.epoch import Epoch
+from database.conn import db_dependency
 from routers import news_scraper, preprocessor
 
 router = APIRouter()
 
 #각 분야별 150개 씩 가져온다(총 1200 개)
-def preprocessed_articles(num:int):
+def preprocessed_articles(db, num:int):
     result = []
-    session = SessionLocal()
     for category_no in range(8):  # 0부터 7까지의 category_no
         data = (
-            session.query(PreprocessedArticle.category_no, PreprocessedArticle.formatted_text)
+            db.query(PreprocessedArticle.category_no, PreprocessedArticle.formatted_text)
             .filter(PreprocessedArticle.category_no == category_no)
             .limit(num)
             .all()
@@ -160,3 +162,64 @@ async def read_single(db: db_dependency, id: int):
             "status": "failure",
             "message": f"[Mini MLOps] GET /data_management/single-group/{id} 실패했습니다. (데이터 삭제 실패)",
         }
+
+
+
+
+
+@router.get("/model/{id}", status_code = status.HTTP_200_OK)
+async def read_all_models(db: db_dependency, id: int):
+    model_found = db.query(Model).filter(Model.model_id == id).first()
+    graph_found = db.query(Graph).filter(Graph.model_id == id).first()
+    epoch_found = db.query(Epoch).filter(Epoch.model_id == id).order_by(Epoch.epoch_number).all()
+
+    return {
+        "status": "success",
+        "message": f"[Mini MLOps] GET /data_management/model/{id} 완료되었습니다.",
+        "model": model_found,
+        "epoch": epoch_found,
+        "graph": graph_found,
+    }
+    
+@router.get("/model/list", status_code = status.HTTP_200_OK)
+async def read_all_models(
+    db: db_dependency,
+    skip: int = Query(0, description="Skip the first N items", ge=0),
+    limit: int = Query(12, description="Limit the number of items returned", le=100),
+):
+    
+    total_models = (
+        db.query(
+            Model.model_id, 
+            Model.model_name, 
+            Model.created_at, 
+            Model.data_length, 
+            Model.num_epochs, 
+            Model.batch_size, 
+            Model.max_length, 
+            Model.accuracy, 
+            Model.loss
+        ).order_by(Model.model_id.desc()).all()
+    )
+    
+    for i in range(len(total_models)):
+        total_models[i] = {
+            "model_id": total_models[i][0],
+            "model_name": total_models[i][1],
+            "created_at": total_models[i][2],
+            "data_length": total_models[i][3],
+            "num_epochs": total_models[i][4],
+            "batch_size": total_models[i][5],
+            "max_length": total_models[i][6],
+            "accuracy": total_models[i][7],
+            "loss": total_models[i][8],
+        }
+        
+    paginated_models = total_models[skip : skip + limit]
+    
+    return {
+        "status": "success",
+        "message": "[Mini MLOps] GET /data_management/model/list 완료되었습니다.",
+        "length": len(total_models),
+        "data": paginated_models,
+    }

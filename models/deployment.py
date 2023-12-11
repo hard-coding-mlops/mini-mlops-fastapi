@@ -3,7 +3,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from database.conn import Base
 
-class Model(Base):
+class Deployment(Base):
     __tablename__ = "deployments"
 
     deploy_id = Column(Integer, primary_key = True, index = True)
