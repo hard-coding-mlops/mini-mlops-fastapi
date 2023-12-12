@@ -9,7 +9,6 @@ import base64
 
 def save_model(config):
     model = Model()
-    
     model.model_name = config['model_fn'][:-4]
     model.num_epochs = config['num_epochs']
     model.batch_size = config['batch_size']
@@ -19,17 +18,17 @@ def save_model(config):
     model.learning_rate = config['learning_rate']
     model.split_rate = config['split_rate']
     model.data_length = config['data_num']
-    model.accuracy = config['accuracy']
+    model.acc = config['acc']
     model.loss = config['loss']
-    model.precision = config['precision']
+    model.accuracy = config['accuracy']
+    model.precision_value = config['precision']
     model.recall = config['recall']
     model.f1 = config['f1']
-    
+
     session.add(model)
     session.commit()
     session.refresh(model)
-    
-    return model.model_id    
+    return model.model_id
 
 def save_graph(model_name,model_id):
     #print(model.model_id)
