@@ -168,7 +168,7 @@ async def top_five_models(db: db_dependency):
     return {
         "status": "success",
         "message": "[Mini MLOps] GET /data_management/model/top 완료되었습니다.",
-        "data" : top_five_models
+        "data" : [{"model_id": row[0], "model_name": row[1], "accuracy": row[2], "loss": row[3]} for row in top_five_models]
     }
 
 def _current_active():
