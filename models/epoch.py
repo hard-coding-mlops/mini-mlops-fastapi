@@ -6,7 +6,7 @@ class Epoch(Base):
     __tablename__ = "epochs"
 
     epoch_id = Column(Integer, primary_key = True, index = True)
-    model_id = Column(Integer, ForeignKey("models.model_id"))
+    model_id = Column(Integer,ForeignKey("models.model_id"))
     epoch_number = Column(Integer)
     train_acc = Column(Float)
     test_acc = Column(Float)

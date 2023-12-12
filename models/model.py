@@ -20,14 +20,14 @@ class Model(Base):
     learning_rate = Column(Float)   # 5e-5
     split_rate = Column(Float)      # 0.25
     data_length = Column(Integer)   # 1200
-    accuracy = Column(Float)        # 82.193
+    acc = Column(Float)
     loss = Column(Float)            # 41.232
+    accuracy = Column(Float)        # 82.193
     precision_value = Column(Float)       # 0.0
     recall = Column(Float)          # 0.0
     f1 = Column(Float)              # 0.0
-    # deployed_at
-    # active
     
     graphs = relationship("Graph", back_populates = "models")
     epochs = relationship("Epoch", back_populates = "models")
     deployments = relationship("Deployment", back_populates = "models")
+    clients = relationship("Client", back_populates = "models")
