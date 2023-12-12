@@ -5,6 +5,7 @@ from database.conn import session, db_dependency
 from models.graph import Graph
 from models.model import Model
 from models.epoch import Epoch
+from models.deployment import Deployment
 import base64
 
 def save_model(config):
@@ -67,3 +68,11 @@ def save_epoch(config, model_id, train_acc_list, train_loss_list, test_acc_list,
         session.add(epoch)
         session.commit()
         session.refresh(epoch)
+
+def save_deployment(model_id):
+    deployment = Deployment()
+    deployment.model_id = model_id
+    
+    session.add(deployment)
+    session.commit()
+    session.refresh(deployment)

@@ -8,7 +8,7 @@ class Deployment(Base):
 
     deploy_id = Column(Integer, primary_key = True, index = True)
     model_id = Column(Integer, ForeignKey("models.model_id"))
-    deployed_at = Column(Date, default = func.current_date())
+    deployed_at = Column(Date, default = "1999-01-01")
     active = Column(Boolean, default = 0)
     
     models = relationship("Model", back_populates = "deployments")

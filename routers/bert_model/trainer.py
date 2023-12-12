@@ -7,7 +7,7 @@ import time
 from copy import deepcopy
 
 from .graph import acc_loss_graph, confusion_graph
-from .save import save_graph,save_model, save_epoch
+from .save import save_graph,save_model, save_epoch, save_deployment
 
 class Trainer():
     def __init__(self, model, optimizer, loss_fn, device):
@@ -114,14 +114,6 @@ class Trainer():
             labels.extend(label)
             predicted_labels.extend(predicted_label)
         
-        
-        acc_loss_graph(config, train_acc_list, test_acc_list, train_loss_list,test_loss_list)
-        confusion_graph(config, labels, predicted_labels)
-        print("[MINI MLOps] Saving model info to database.")
-        model_id = save_model(config)
-        save_graph(config['model_fn'][:-4], model_id)
-        save_epoch(config,model_id,train_acc_list, train_loss_list, test_acc_list,test_loss_list)
-        
         total_end = time.time()
         total_elapsed = total_end - start
         print("Total_ElapsedTime : {} m {} s".format(total_elapsed//60 , total_elapsed%60))
@@ -132,9 +124,17 @@ class Trainer():
             config['loss'] = test_loss
             best_model = deepcopy(self.model.state_dict())
         
+        acc_loss_graph(config, train_acc_list, test_acc_list, train_loss_list,test_loss_list)
+        confusion_graph(config, labels, predicted_labels)
+        print("[MINI MLOps] Saving model info to database.")
+        model_id = save_model(config)
+        save_graph(config['model_fn'][:-4], model_id)
+        save_epoch(config,model_id,train_acc_list, train_loss_list, test_acc_list,test_loss_list)
+        save_deployment(model_id)
+        
         self.model.load_state_dict(best_model)
         print("train End")
         #########################################################################################
 
         # Restore to best model.
-        # self.model.load_state_dict(best_model)
+        # self.model.load_state_dict(best_model)    

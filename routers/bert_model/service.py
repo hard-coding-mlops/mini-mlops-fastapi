@@ -28,8 +28,11 @@ def predict(config, predict_sentence):
     #device = torch.device('cuda:0') if torch.cuda.is_available() else torch.device('cpu')
     device = torch.device('cpu')
     model = BERTClassifier(bertmodel, dr_rate=0.5).to(device)
-    load_model = 'C:/Users/admin/mini-mlops-fastapi/routers/bert_model/model/model_111111.pth'
-    model.load_state_dict(torch.load(load_model, map_location="cpu"))
+    
+    # file_path = '/content/drive/MyDrive/mini_mlops_fastapi/learned_models/'
+    # load_model = file_path + config['model_name'] + '.pth'
+    load_model = 'C:/Users/admin/mini-mlops-fastapi/learned_models/model_1234.pth'
+    model.load_state_dict(torch.load(load_model, map_location="cpu"), strict=False)
     model.eval()
 
     # 각 미니배치에 대한 처리 수행

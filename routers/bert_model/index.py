@@ -17,7 +17,7 @@ from models.client import Client
 
 
 class Parameters(BaseModel):
-    model_filename: str
+    model_fn: str
     max_len: int
     batch_size: int
     num_epochs: int
@@ -34,7 +34,7 @@ router = APIRouter()
 def learn(params: Parameters):
     print("[MINI MLOps] /model/learn 시작")
     config = {
-        'model_fn': f"{params.model_filename}.pth",
+        'model_fn': f"{params.model_fn}.pth",
         'max_len' : params.max_len,
         'batch_size' :params.batch_size,
         'num_epochs' :params.num_epochs,
@@ -171,13 +171,13 @@ async def top_five_models(db: db_dependency):
         "data" : top_five_models
     }
 
-@router.get("/test", status_code = status.HTTP_200_OK)
 def _current_active():
     model_id = (
         session.query(Deployment.model_id)
         .filter(Deployment.active == 1)
         .first()
     )
+    
     print(model_id) 
     return model_id[0]
     
@@ -207,6 +207,7 @@ async def active(id:int):
     old_model = session.query(Deployment).filter(Deployment.model_id == model_id).first()
     old_model.active = 0
     new_model = session.query(Deployment).filter(Deployment.model_id == id).first()
+    new_model.deployed_at = func.current_date()
     new_model.active = 1
     session.commit()
 
@@ -219,8 +220,7 @@ def _save_client(model_id,insert,result):
     client = Client()
     client.model_id = model_id
     client.user_insert = insert
-    client.predict_result = result
-    client.user_insert = '-'    
+    client.predict_result = result 
         
     session.add(client)
     session.commit()
@@ -234,22 +234,22 @@ class Article(BaseModel):
 @router.get("/classify", status_code = status.HTTP_200_OK)
 async def active(db: db_dependency, article:Article):
     model_id = _current_active()
-    model = db.query(Model.max_length, Model.batch_size).filter(Model.model_id == model_id).first()
+    model = db.query(Model.model_name, Model.max_length, Model.batch_size).filter(Model.model_id == model_id).first()
     
     config = {
-        'max_len' : model[0],
-        'batch_size' :model[1]
+        'model_name' : model[0],
+        'max_len' : model[1],
+        'batch_size' :model[2]
     }
     
-    result = predict(config,article.user_input)
+    result = predict(config,article.user_input)  
     
-    client_id = _save_client(model_id,article.user_input,result)
+    client_id = _save_client(model_id,article.user_input,result) 
     
     return {
         "status": "success",
         "message": f"[Mini MLOps] GET /data_management/model/classify/{article.user_input} 완료되었습니다.",
         "result" : result,
-        "model_id": model_id,
         "client_id" : client_id
     }
 
@@ -267,7 +267,6 @@ async def active(client_log:Client_log):
         "status": "success",
         "message": f"[Mini MLOps] GET /data_management/model/evaluate/{client_log.client_id}/{client_log.reinput} 완료되었습니다."
     }
-
 
 @router.get("/{id}", status_code = status.HTTP_200_OK)
 async def read_all_epochs(db: db_dependency, id: int):
