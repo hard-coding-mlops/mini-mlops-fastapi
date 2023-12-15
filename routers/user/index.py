@@ -58,9 +58,6 @@ async def kakao_login(db: db_dependency, kakao_request: KakaoTokenRequest):
         db.commit()
         db.refresh(new_user)
         return {"status": "success", "accessToken": access_token, "name": new_user.name}
-    
-    
-    return {"status": "success", "accessToken": access_token, "name": user_name}
   
   except Exception as e:
     print(traceback.format_exc())
