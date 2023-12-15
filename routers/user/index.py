@@ -22,9 +22,6 @@ class KakaoTokenRequest(BaseModel):
 @router.post("/kakao/login", status_code=status.HTTP_200_OK)
 async def kakao_login(db: db_dependency, kakao_request: KakaoTokenRequest):
   try:
-    print(kakao_request.code)
-    print(KAKAO_REST_API_KEY)
-    print(KAKAO_REDIRECT_URI)
     token_response = await AsyncClient().post(
       "https://kauth.kakao.com/oauth/token",
       params={
