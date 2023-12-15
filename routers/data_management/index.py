@@ -1,7 +1,8 @@
 from fastapi import APIRouter, HTTPException, status, Query
 from fastapi.responses import StreamingResponse
 import traceback
-from sqlalchemy import select, func, text, sql
+from sqlalchemy import select, func
+from sqlalchemy.orm import aliased
 import csv
 import io
 
@@ -64,40 +65,50 @@ async def download_csv(db: db_dependency, id: int):
 async def read_all(
     db: db_dependency,
     skip: int = Query(0, description="Skip the first N items", ge=0),
-    limit: int = Query(12, description="Limit the number of items returned", le=100),
+    limit: int = Query(100, description="Limit the number of items returned", le=100),
 ):
-    total_ordered_data = []
-
-    total_scraped_orders = (
-        db.query(ScrapedOrder.id, ScrapedOrder.start_datetime, ScrapedOrder.end_datetime)
-        .order_by(ScrapedOrder.id.desc())
-        .all()
+    scraped_orders_alias = aliased(ScrapedOrder, name="b")
+    preprocessed_articles_alias = aliased(
+        select(
+            NewsArticle.scraped_order_no,
+            func.count(NewsArticle.scraped_order_no).label("article_count")
+        )
+        .join(PreprocessedArticle, PreprocessedArticle.original_article_id == NewsArticle.id)
+        .group_by(NewsArticle.scraped_order_no)
+        .alias(name="a")
     )
 
-    for order_id, start_datetime, end_datetime in total_scraped_orders:
-        preprocessed_articles_count = (
-            db.query(func.count(PreprocessedArticle.id))
-            .join(NewsArticle, PreprocessedArticle.original_article_id == NewsArticle.id)
-            .filter(NewsArticle.scraped_order_no == order_id)
-            .scalar()
-        )
+    # Build the query
+    stmt = (
+        select(scraped_orders_alias, preprocessed_articles_alias.c.article_count)
+        .join(preprocessed_articles_alias, scraped_orders_alias.id == preprocessed_articles_alias.c.scraped_order_no)
+        .order_by(scraped_orders_alias.id.desc()) 
+        .offset(skip)
+        .limit(limit)
+    )
 
-        ordered_data = {
-            "scraped_order_no": order_id,
-            "start_datetime": start_datetime,
-            "end_datetime": end_datetime,
-            "preprocessed_articles_length": preprocessed_articles_count,
+    # Execute the query
+    result = db.execute(stmt).fetchall()
+
+    # Process the result as needed
+    formatted_data = [
+        {
+            "scraped_order_no": row[0].id,
+            "start_datetime": row[0].start_datetime,
+            "end_datetime": row[0].end_datetime,
+            "preprocessed_articles_count": row[1],
         }
+        for row in result
+    ]
 
-        total_ordered_data.append(ordered_data)
-
-    paginated_data = total_ordered_data[skip : skip + limit]
 
     return {
         "status": "success",
         "message": "[Mini MLOps] GET /data_management/all-data 완료되었습니다.",
-        "total_ordered_data": paginated_data,
+        "length": len(formatted_data),
+        "total_ordered_data": formatted_data,
     }
+
 
 @router.get("/single-group/{id}", status_code = status.HTTP_200_OK)
 async def read_single(db: db_dependency, id: int):
