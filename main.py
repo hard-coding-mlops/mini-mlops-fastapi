@@ -4,9 +4,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from typing import Annotated
 from sqlalchemy.orm import Session
 
+from routers.user import index as user
 from routers.news_scraper import index as scraper
 from routers.preprocessor import index as preprocessor
-from routers.bert_model import index as bert_model
+# from routers.bert_model import index as bert_model
 from routers.news_classifier import index as classifier
 from routers.data_management import index as data_management
 
@@ -35,6 +36,9 @@ app.add_middleware(
 def say_hello():
     return {"message": "[Mini MLOps] Hello world from FastAPI."}
 
+# 관리자 인증
+app.include_router(user.router, prefix="/user")
+
 # WEB API
 app.include_router(data_management.router, prefix="/data_management")
 
@@ -45,7 +49,7 @@ app.include_router(scraper.router, prefix="/scraper")
 app.include_router(preprocessor.router, prefix="/preprocessor")
 
 # 학습
-app.include_router(bert_model.router, prefix="/model")
+# app.include_router(bert_model.router, prefix="/model")
 
 # 배포
 
