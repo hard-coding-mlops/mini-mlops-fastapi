@@ -222,7 +222,7 @@ async def active(id:int):
     old_model = session.query(Deployment).filter(Deployment.model_id == model_id).first()
     old_model.active = 0
     new_model = session.query(Deployment).filter(Deployment.model_id == id).first()
-    new_model.deployed_at = func.current_date()
+    new_model.deployed_at = func.current_date().strftime("%Y-%m-%d %H:%M:%S")
     new_model.active = 1
     session.commit()
 
