@@ -3,6 +3,7 @@ from database.conn import db_dependency,session
 from sqlalchemy.sql import func
 from sqlalchemy import desc
 from pydantic import BaseModel
+from datetime import datetime
 
 from models.model import Model
 from models.graph import Graph
@@ -216,20 +217,31 @@ async def active(db: db_dependency):
         "evaluation_noresponse": evaluation_noresponse
     }
     
-@router.get("/deploy/{id}", status_code = status.HTTP_200_OK)
-async def active(id:int):
-    model_id = _current_active()
-    old_model = session.query(Deployment).filter(Deployment.model_id == model_id).first()
-    old_model.active = 0
-    new_model = session.query(Deployment).filter(Deployment.model_id == id).first()
-    new_model.deployed_at = func.current_date().strftime("%Y-%m-%d %H:%M:%S")
-    new_model.active = 1
-    session.commit()
+@router.get("/deploy/{id}", status_code=status.HTTP_200_OK)
+async def active(id: int):
+    try:
+        model_id = _current_active()
+        print(model_id)
+        
+        old_model = session.query(Deployment).filter(Deployment.model_id == model_id).first()
+        old_model.active = 0
+        
+        new_model = session.query(Deployment).filter(Deployment.model_id == id).first()
+        new_model.deployed_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        new_model.active = 1
+        
+        session.commit()
+        print(new_model.model_name)
 
-    return {
-        "status": "success",
-        "message": f"[Mini MLOps] GET /data_management/model/deploy/{id} 완료되었습니다."
-    }
+        return {
+            "status": "success",
+            "message": f"[Mini MLOps] GET /data_management/model/deploy/{id} 완료되었습니다."
+        }
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": f"에러 발생: {str(e)}"
+        }
 
 def _save_client(model_id,insert,result):
     client = Client()

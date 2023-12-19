@@ -19,7 +19,7 @@ app = FastAPI()
 # 미들웨어
 # CORS 정책
 origins = [
-    "http://localhost:3000"
+    "*"
     ]
 app.add_middleware(
     CORSMiddleware,
