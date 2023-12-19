@@ -15,8 +15,6 @@ from models import news_article, preprocessed_article
 from database.conn import engine, SessionLocal
 
 app = FastAPI()
-news_article.Base.metadata.create_all(bind = engine)
-preprocessed_article.Base.metadata.create_all(bind = engine)
 
 # 미들웨어
 # CORS 정책
