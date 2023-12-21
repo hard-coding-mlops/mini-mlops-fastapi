@@ -58,7 +58,7 @@ def scrape_news_articles(db: db_dependency):
         
         data = {
             'kind': "수집 완료",
-            'progress': 30,
+            'progress': 10,
         }
         yield f"data: {json.dumps(data)}\n\n"
         # last_scraped_order = db.query(ScrapedOrder).order_by(ScrapedOrder.id.desc()).limit(1).first()
@@ -76,22 +76,22 @@ def scrape_news_articles(db: db_dependency):
         db.refresh(scraped_order)
         
         total_articles = sum(len(sublist) for sublist in results)
-        current_progress = 31
+        current_progress = 11
     
         for articles in results:
             for article in articles:
                 # 로딩 값 표시
                 save_news_article(db, article, scraped_order.id)
-                current_progress += (1 / total_articles) * 68
+                current_progress += (1 / total_articles) * 38
                 data = {
                     'kind': "수집 데이터베이스 저장",
-                    'progress': current_progress,  # 31 ~ 99
+                    'progress': current_progress,  # 11 ~ 49
                 }
                 yield f"data: {json.dumps(data)}\n\n"
         
         data = {
             'kind': "수집 완료",
-            'progress': 100,
+            'progress': 50,
         }
         yield f"data: {json.dumps(data)}\n\n"
         print("\033[36m[Mini MLOps] \033[32m뉴스 스크래핑을 완료했습니다.")
