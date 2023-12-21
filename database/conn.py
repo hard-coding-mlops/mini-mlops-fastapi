@@ -8,7 +8,7 @@ from sqlalchemy.ext.declarative import declarative_base
 
 DATABASE_URL = f"mysql+pymysql://admin:Pvm9ri1C9uKSiKQEXBAL@database-1.cps5u9q9xbdf.ap-northeast-2.rds.amazonaws.com:3306/minimlops"
 
-engine = create_engine(DATABASE_URL)
+engine = create_engine(DATABASE_URL, pool_pre_ping=True)
 SessionLocal = sessionmaker(autocommit = False, autoflush = False, bind = engine)
 session = SessionLocal()
 
