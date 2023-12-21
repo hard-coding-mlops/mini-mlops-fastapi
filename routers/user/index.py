@@ -42,19 +42,19 @@ async def kakao_login(db: db_dependency, kakao_request: KakaoTokenRequest):
     
     user_response.raise_for_status()
     user_info = user_response.json()
-    
+
     existing_user = db.query(User).filter(User.id == user_info['id']).first()
         
     if existing_user:
         # If the user already exists, you can implement your login logic here
-        return {"status": "success", "accessToken": access_token, "name": existing_user.name}
+        return {"status": "success", "accessToken": access_token, "name": existing_user.name, "profileImage": user_info['properties']['profile_image']}
     else:
         # If the user doesn't exist, create a new user and save to the database
         new_user = User(id=user_info['id'], name=user_info['properties']['nickname'])
         db.add(new_user)
         db.commit()
         db.refresh(new_user)
-        return {"status": "success", "accessToken": access_token, "name": new_user.name}
+        return {"status": "success", "accessToken": access_token, "name": new_user.name, "profileImage": user_info['properties']['profile_image']}
   
   except Exception as e:
     print(traceback.format_exc())
