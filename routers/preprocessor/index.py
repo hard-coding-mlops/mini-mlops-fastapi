@@ -15,7 +15,7 @@ router = APIRouter()
 # tokenizer = KoBERTTokenizer.from_pretrained('skt/kobert-base-v1', sp_model_kwargs={'nbest_size': -1, 'alpha': 0.6, 'enable_sampling': True})
 
 
-async def preprocess_articles(db: db_dependency):
+async def preprocess_articles_shit(db: db_dependency):
     async def calculate_progress(total, current, start_percentage, end_percentage):
         return start_percentage + (current / total * (end_percentage - start_percentage))
 
@@ -52,7 +52,7 @@ async def preprocess_articles(db: db_dependency):
     
     total_articles = len(last_scraped_news_articles)
     for index, article in enumerate(last_scraped_news_articles):
-        async for progress_data in send_progress("중복 제거", index, total_articles, 5, 25):
+        for progress_data in send_progress("중복 제거", index, total_articles, 5, 25):
             yield progress_data
         
         if article.content not in non_duplicated_contents:
@@ -61,7 +61,7 @@ async def preprocess_articles(db: db_dependency):
     
     total_non_duplicated_articles = len(non_duplicated_articles)
     for index, article in enumerate(non_duplicated_articles):
-        async for progress_data in send_progress("한글 이외 제거", index, total_non_duplicated_articles, 25, 75):
+        for progress_data in send_progress("한글 이외 제거 + db 저장", index, total_non_duplicated_articles, 25, 75):
             yield progress_data
         
         preprocessed_article = PreprocessedArticle()
@@ -86,21 +86,17 @@ async def preprocess_articles(db: db_dependency):
     
     print(f"\n\033[36m[Mini MLOps] \033[32m데이터 정제가 완료되었습니다.")
 
-@router.get("/preprocess", status_code=status.HTTP_200_OK)
-async def preprocess_articles_sse(db: db_dependency):
-    return StreamingResponse(preprocess_articles(db), media_type="text/event-stream")
 
 
 
-
-# @router.get("/scrape-and-preprocess", status_code = status.HTTP_200_OK)
-def scrape_and_preprocess_articles(db: db_dependency):
+def preprocess_articles(db: db_dependency):
     # news_scraper.index.scrape_news_articles(db)
     
     data = {
         'kind': "정제 시작",
         'progress': 51,
     }
+    yield f"data: {json.dumps(data)}\n\n"
     last_scraped_order = (
         db.query(NewsArticle.scraped_order_no)
         .order_by(NewsArticle.scraped_order_no.desc())
@@ -135,17 +131,19 @@ def scrape_and_preprocess_articles(db: db_dependency):
     }
     yield f"data: {json.dumps(data)}\n\n"
     # 한글 이외 단어들 제거
+    count = 0
+    length_of_content = len(non_duplicated_articles)
     preprocessed_articles_length = 0
     for article in non_duplicated_articles:
+        count += 1
         preprocessed_article = PreprocessedArticle()
         article.title = re.sub('[^가-힣 ]', '', article.title).strip()
         article.content = re.sub('[^가-힣 ]', '', article.content).strip()
-        length_of_content = len(article.content)
-        
+
         # 로딩 값 표시 61 ~ 99
         data = {
             'kind': "정제 데이터베이스 저장",
-            'progress': 61 + int((length_of_content / 100) * 38),
+            'progress': 61 + (count / length_of_content) * 38,
         }
         yield f"data: {json.dumps(data)}\n\n"
         
@@ -168,6 +166,6 @@ def scrape_and_preprocess_articles(db: db_dependency):
     }
     yield f"data: {json.dumps(data)}\n\n"
 
-# @router.get("/scrape-and-preprocess", status_code = status.HTTP_200_OK)
-# def scrape_and_preprocess_articles_sse(db: db_dependency):
-#     return StreamingResponse(scrape_and_preprocess_articles(db), media_type="text/event-stream")
+@router.get("/preprocess", status_code=status.HTTP_200_OK)
+def preprocess_articles_sse(db: db_dependency):
+    return StreamingResponse(preprocess_articles(db), media_type="text/event-stream")
