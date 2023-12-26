@@ -174,7 +174,7 @@ async def read_all_models(
 @router.get("/top-five", status_code = status.HTTP_200_OK)
 async def top_five_models(db: db_dependency):
     top_five_models = (
-        db.query(Model.model_id, Model.model_name, Model.accuracy, Model.loss)
+        db.query(Model.model_id, Model.model_name, Model.acc, Model.loss)
         .order_by(Model.accuracy.desc())
         .limit(5)
         .all()
@@ -192,7 +192,7 @@ def _current_active():
         .filter(Deployment.active == 1)
         .first()
     )
-    print(model_id) 
+    print(model_id)
     return model_id[0]
     
 
@@ -287,6 +287,7 @@ class Client_log(BaseModel):
 @router.post("/evaluate", status_code = status.HTTP_200_OK)
 async def active(client_log:Client_log):
     client = session.query(Client).filter(Client.client_id == client_log.client_id).first()
+    print(client_log.reinput)
     client.client_result = client_log.reinput
     session.commit()
     
