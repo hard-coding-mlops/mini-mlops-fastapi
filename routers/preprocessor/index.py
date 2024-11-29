@@ -15,7 +15,7 @@ router = APIRouter()
 # tokenizer = KoBERTTokenizer.from_pretrained('skt/kobert-base-v1', sp_model_kwargs={'nbest_size': -1, 'alpha': 0.6, 'enable_sampling': True})
 
 
-async def preprocess_articles_shit(db: db_dependency):
+async def preprocess_articles_full_progress(db: db_dependency):
     async def calculate_progress(total, current, start_percentage, end_percentage):
         return start_percentage + (current / total * (end_percentage - start_percentage))
 
